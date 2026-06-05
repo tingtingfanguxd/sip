@@ -1,0 +1,13 @@
+{
+  "name": "sip",
+  "version": "1.0.0",
+  "private": true,
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "icons": "node generate-icons.js",
+    "screenshots": "node generate-screenshots.js"
+  },
+  "devDependencies": {
+    "puppeteer": "^25.1.0"
+  }
+}

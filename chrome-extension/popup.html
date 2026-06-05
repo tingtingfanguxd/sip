@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=380">
+<title>Sip</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+
+<!-- AMBIENT BLOBS -->
+<div class="blob b1"></div>
+<div class="blob b2"></div>
+<div class="blob b3"></div>
+
+<!-- ── HEADER ─────────────────────────────────────────────── -->
+<header class="app-header">
+  <div class="brand">
+    <svg class="brand-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <path d="M4 14 C4 14 4 8 10 8 C16 8 16 14 16 14" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M7 8 C7 8 7 5 10 5 C13 5 13 8 13 8" stroke="rgba(245,158,11,.4)" stroke-width="1.2" stroke-linecap="round"/>
+      <rect x="3" y="14" width="14" height="2.5" rx="1.25" fill="#f59e0b" opacity=".8"/>
+      <path d="M16 10 C18 10 18 13 16 13" stroke="rgba(245,158,11,.5)" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
+    <span class="brand-name">Sip</span>
+  </div>
+  <div class="header-actions">
+    <button class="icon-btn" id="music-btn" title="Toggle ambient music">♪</button>
+    <div class="streak-pill" id="streak-pill">
+      <span class="streak-fire">🔥</span>
+      <span id="streak-num">0</span>
+    </div>
+  </div>
+</header>
+
+<!-- ── TAB CONTENT ────────────────────────────────────────── -->
+<main class="content" id="content">
+
+  <!-- ── REVIEW TAB ──────────────────────────────────────── -->
+  <section id="tab-review" class="tab-pane active">
+
+    <!-- Onboarding / empty (new user) -->
+    <div id="state-onboard" class="state-block hidden">
+      <div class="onboard-cup">☕</div>
+      <h2 class="state-title">Welcome to Sip</h2>
+      <p class="state-sub">Sip a word a day.<br>Select any word on a webpage and click <strong>"Sip it ☕"</strong> to look it up and add it to your book.</p>
+      <div class="onboard-steps">
+        <div class="step"><span class="step-num">1</span> Select a word on any page</div>
+        <div class="step"><span class="step-num">2</span> Click <em>Sip it ☕</em> or right-click</div>
+        <div class="step"><span class="step-num">3</span> Add it to your word book</div>
+        <div class="step"><span class="step-num">4</span> Come back here to review</div>
+      </div>
+    </div>
+
+    <!-- All caught up -->
+    <div id="state-caught-up" class="state-block hidden">
+      <div class="state-icon">✨</div>
+      <h2 class="state-title">All caught up!</h2>
+      <p class="state-sub">No reviews due right now.<br>Go explore the web and sip new words.</p>
+      <div class="caught-up-count"><span id="total-words-count">0</span> words in your book</div>
+    </div>
+
+    <!-- Pre-session -->
+    <div id="state-prestart" class="state-block hidden">
+      <div class="prestart-art">☕</div>
+      <h2 class="state-title">Ready to brew?</h2>
+      <p class="state-sub">A 5-minute review session awaits.</p>
+      <div class="due-badge" id="due-badge">0 words due</div>
+      <button class="primary-btn" id="start-btn">Start Brewing →</button>
+    </div>
+
+    <!-- Session -->
+    <div id="state-session" class="hidden">
+      <div class="session-top">
+        <div class="session-progress-wrap">
+          <div class="session-progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+          <span class="progress-label" id="progress-label">0 / 0</span>
+        </div>
+      </div>
+
+      <div class="flip-scene">
+        <div class="flip-card" id="flip-card">
+          <div class="flip-inner" id="flip-inner">
+            <!-- FRONT -->
+            <div class="flip-front">
+              <div class="flip-context" id="flip-context"></div>
+              <div class="flip-word" id="flip-word"></div>
+              <div class="flip-pos" id="flip-pos-front"></div>
+              <div class="flip-hint">tap to reveal</div>
+            </div>
+            <!-- BACK -->
+            <div class="flip-back">
+              <div class="flip-word-sm" id="flip-word-back"></div>
+              <div class="flip-phonetic-row">
+                <span class="flip-phonetic" id="flip-phonetic"></span>
+                <button class="mini-play-btn" id="flip-play-btn">♪</button>
+              </div>
+              <div class="flip-definition" id="flip-definition"></div>
+              <div class="flip-example" id="flip-example"></div>
+              <div class="flip-synonyms" id="flip-synonyms"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grade-row hidden" id="grade-row">
+        <button class="grade-btn g-again" data-grade="0">Again<br><span>🌧️</span></button>
+        <button class="grade-btn g-hard"  data-grade="1">Hard<br><span>😅</span></button>
+        <button class="grade-btn g-good"  data-grade="3">Good<br><span>☕</span></button>
+        <button class="grade-btn g-easy"  data-grade="5">Easy<br><span>🚀</span></button>
+      </div>
+    </div>
+
+    <!-- Session done -->
+    <div id="state-done" class="state-block hidden">
+      <div class="done-anim" id="done-anim">☕</div>
+      <h2 class="state-title">Brew complete!</h2>
+      <div class="done-stats">
+        <div class="stat-chip"><span id="done-count">0</span><em>reviewed</em></div>
+        <div class="stat-chip"><span id="done-streak">0</span><em>day streak</em></div>
+      </div>
+      <button class="secondary-btn" id="done-again-btn">Review More</button>
+    </div>
+
+  </section>
+
+  <!-- ── WORDS TAB ───────────────────────────────────────── -->
+  <section id="tab-words" class="tab-pane hidden">
+    <div class="words-toolbar">
+      <input class="search-input" id="search-input" type="text" placeholder="Search words…">
+      <select class="sort-select" id="sort-select">
+        <option value="recent">Recent</option>
+        <option value="due">Due first</option>
+        <option value="az">A → Z</option>
+      </select>
+    </div>
+    <div id="word-list" class="word-list"></div>
+    <div id="word-empty" class="word-empty hidden">
+      <p>No words yet. Go sip some! ☕</p>
+    </div>
+  </section>
+
+  <!-- ── SETTINGS TAB ────────────────────────────────────── -->
+  <section id="tab-settings" class="tab-pane hidden">
+    <div class="settings-scroll">
+
+      <div class="settings-section">
+        <div class="settings-label">AI Example Sentences</div>
+        <p class="settings-hint">Paste a free <a href="https://aistudio.google.com/app/apikey" target="_blank">Google Gemini API key</a> to unlock AI-generated contextual example sentences.</p>
+        <div class="key-row">
+          <input class="settings-input" id="gemini-key-input" type="password" placeholder="AIzaSy…">
+          <button class="save-key-btn" id="save-key-btn">Save</button>
+        </div>
+        <div class="key-status" id="key-status"></div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-label">Daily Reminder</div>
+        <label class="toggle-row">
+          <span>Enable daily reminder</span>
+          <input type="checkbox" id="reminder-toggle" class="toggle-input">
+          <span class="toggle-track"></span>
+        </label>
+        <input class="settings-input" id="reminder-time" type="time" value="09:00" style="margin-top:8px;width:120px">
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-label">Ambient Music</div>
+        <label class="toggle-row">
+          <span>Play while reviewing</span>
+          <input type="checkbox" id="music-toggle" class="toggle-input" checked>
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+
+      <div class="settings-section danger-zone">
+        <div class="settings-label">Data</div>
+        <button class="danger-btn" id="export-btn">Export word book (JSON)</button>
+        <button class="danger-btn red" id="clear-btn">Clear all words</button>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ── BOTTOM TABS ─────────────────────────────────────────── -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" data-tab="review">
+    <span class="nav-icon">☕</span>
+    <span class="nav-label">Review</span>
+  </button>
+  <button class="nav-btn" data-tab="words">
+    <span class="nav-icon">📖</span>
+    <span class="nav-label">Words</span>
+  </button>
+  <button class="nav-btn" data-tab="settings">
+    <span class="nav-icon">⚙️</span>
+    <span class="nav-label">Settings</span>
+  </button>
+</nav>
+
+<!-- TOAST -->
+<div class="toast hidden" id="toast"></div>
+
+<script src="popup.js"></script>
+</body>
+</html>

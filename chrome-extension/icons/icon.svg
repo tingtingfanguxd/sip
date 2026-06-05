@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- Background -->
+  <rect width="128" height="128" rx="28" fill="#1a1510"/>
+
+  <!-- Warm glow -->
+  <ellipse cx="64" cy="72" rx="46" ry="36" fill="rgba(245,158,11,0.12)"/>
+
+  <!-- Cup body -->
+  <path d="M28 58 C28 58 30 95 64 95 C98 95 100 58 100 58 Z" fill="#f59e0b"/>
+  <path d="M28 58 C28 58 30 95 64 95 C98 95 100 58 100 58 Z" fill="url(#cupGrad)"/>
+
+  <!-- Cup rim -->
+  <rect x="24" y="52" width="80" height="10" rx="5" fill="#fbbf24"/>
+
+  <!-- Handle -->
+  <path d="M100 62 C118 62 118 82 100 82" stroke="#f59e0b" stroke-width="7" fill="none" stroke-linecap="round"/>
+
+  <!-- Steam lines -->
+  <path d="M48 42 C48 42 44 34 48 26 C52 18 48 10 48 10" stroke="rgba(245,158,11,0.6)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <path d="M64 38 C64 38 60 30 64 22 C68 14 64 6 64 6"   stroke="rgba(245,158,11,0.45)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <path d="M80 42 C80 42 76 34 80 26 C84 18 80 10 80 10" stroke="rgba(245,158,11,0.3)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+
+  <!-- "S" letter in coffee -->
+  <text x="64" y="84" font-family="Georgia,serif" font-size="26" font-weight="700" fill="#1a1510" text-anchor="middle" opacity="0.85">S</text>
+
+  <defs>
+    <linearGradient id="cupGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(251,191,36,0.3)"/>
+      <stop offset="100%" stop-color="rgba(146,64,14,0.5)"/>
+    </linearGradient>
+  </defs>
+</svg>

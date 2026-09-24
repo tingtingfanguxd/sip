@@ -6,15 +6,10 @@
 <title>Sip</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-
-<!-- AMBIENT BLOBS -->
-<div class="blob b1"></div>
-<div class="blob b2"></div>
-<div class="blob b3"></div>
 
 <!-- ── HEADER ─────────────────────────────────────────────── -->
 <header class="app-header">
@@ -22,13 +17,13 @@
     <svg class="brand-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
       <path d="M4 14 C4 14 4 8 10 8 C16 8 16 14 16 14" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round"/>
       <path d="M7 8 C7 8 7 5 10 5 C13 5 13 8 13 8" stroke="rgba(245,158,11,.4)" stroke-width="1.2" stroke-linecap="round"/>
-      <rect x="3" y="14" width="14" height="2.5" rx="1.25" fill="#f59e0b" opacity=".8"/>
+      <rect x="3" y="14" width="14" height="2.5" fill="#f59e0b" opacity=".8"/>
       <path d="M16 10 C18 10 18 13 16 13" stroke="rgba(245,158,11,.5)" stroke-width="1.2" stroke-linecap="round"/>
     </svg>
     <span class="brand-name">Sip</span>
   </div>
   <div class="header-actions">
-    <button class="icon-btn" id="music-btn" title="Toggle ambient music">♪</button>
+    <button class="icon-btn" id="music-btn" title="Toggle ambient music">♫</button>
     <div class="streak-pill" id="streak-pill">
       <span class="streak-fire">🔥</span>
       <span id="streak-num">0</span>
@@ -44,31 +39,85 @@
 
     <!-- Onboarding / empty (new user) -->
     <div id="state-onboard" class="state-block hidden">
-      <div class="onboard-cup">☕</div>
+      <!-- Cat head + paws — animatable via CatAnimator -->
+      <svg id="cat-idle" class="cat-mascot cat-anim-idle" width="120" height="110" viewBox="0 0 120 110" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="60" cy="106" rx="27" ry="4" fill="rgba(0,0,0,.12)"/>
+        <ellipse cx="38" cy="97" rx="13" ry="7" fill="#292524"/>
+        <ellipse cx="82" cy="97" rx="13" ry="7" fill="#292524"/>
+        <circle cx="60" cy="56" r="30" fill="#1C1917"/>
+        <ellipse cx="60" cy="71" rx="15" ry="9" fill="#292524"/>
+        <g id="cat-idle-ear-l" style="transform-origin:36px 36px">
+          <polygon points="36,40 22,12 52,30" fill="#1C1917"/>
+          <polygon points="37,40 27,18 49,31" fill="#FDA4AF" opacity=".65"/>
+        </g>
+        <g id="cat-idle-ear-r" style="transform-origin:84px 36px">
+          <polygon points="84,40 98,12 68,30" fill="#1C1917"/>
+          <polygon points="83,40 93,18 71,31" fill="#FDA4AF" opacity=".65"/>
+        </g>
+        <g id="cat-idle-eye-l" style="transform-origin:46px 50px">
+          <circle cx="46" cy="50" r="9" fill="#FFE033"/>
+          <rect x="44" y="43.5" width="4" height="13" rx="2" fill="#1C1917"/>
+          <circle cx="43" cy="47" r="2.5" fill="white" opacity=".9"/>
+        </g>
+        <g id="cat-idle-eye-r" style="transform-origin:74px 50px">
+          <circle cx="74" cy="50" r="9" fill="#FFE033"/>
+          <rect x="72" y="43.5" width="4" height="13" rx="2" fill="#1C1917"/>
+          <circle cx="71" cy="47" r="2.5" fill="white" opacity=".9"/>
+        </g>
+        <ellipse cx="60" cy="61" rx="3.5" ry="2.5" fill="#FDA4AF"/>
+        <path id="cat-idle-mouth" d="M56,64 Q60,68 64,64" stroke="#FDA4AF" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <g id="cat-idle-whi-l" style="transform-origin:46px 62px">
+          <line x1="22" y1="60" x2="53" y2="62" stroke="rgba(255,255,255,.5)" stroke-width="1.1" stroke-linecap="round"/>
+          <line x1="22" y1="65" x2="53" y2="64" stroke="rgba(255,255,255,.5)" stroke-width="1.1" stroke-linecap="round"/>
+        </g>
+        <g id="cat-idle-whi-r" style="transform-origin:74px 62px">
+          <line x1="98" y1="60" x2="67" y2="62" stroke="rgba(255,255,255,.5)" stroke-width="1.1" stroke-linecap="round"/>
+          <line x1="98" y1="65" x2="67" y2="64" stroke="rgba(255,255,255,.5)" stroke-width="1.1" stroke-linecap="round"/>
+        </g>
+      </svg>
       <h2 class="state-title">Welcome to Sip</h2>
-      <p class="state-sub">Sip a word a day.<br>Select any word on a webpage and click <strong>"Sip it ☕"</strong> to look it up and add it to your book.</p>
+      <p class="state-sub">Sip a word a day.<br>Select any word on a webpage — it's saved instantly.</p>
       <div class="onboard-steps">
         <div class="step"><span class="step-num">1</span> Select a word on any page</div>
-        <div class="step"><span class="step-num">2</span> Click <em>Sip it ☕</em> or right-click</div>
-        <div class="step"><span class="step-num">3</span> Add it to your word book</div>
+        <div class="step"><span class="step-num">2</span> Definition appears, word is saved ☕</div>
+        <div class="step"><span class="step-num">3</span> Or right-click → Sip this word</div>
         <div class="step"><span class="step-num">4</span> Come back here to review</div>
       </div>
     </div>
 
     <!-- All caught up -->
     <div id="state-caught-up" class="state-block hidden">
-      <div class="state-icon">✨</div>
-      <h2 class="state-title">All caught up!</h2>
-      <p class="state-sub">No reviews due right now.<br>Go explore the web and sip new words.</p>
-      <div class="caught-up-count"><span id="total-words-count">0</span> words in your book</div>
+      <canvas id="ring-caught" class="ring-canvas ring-caught-canvas" width="170" height="170"></canvas>
+      <!-- Sleeping cat head + paws -->
+      <svg id="cat-sleep" class="cat-mascot cat-anim-sleep" width="100" height="95" viewBox="0 0 100 95" xmlns="http://www.w3.org/2000/svg" style="margin-top:-4px">
+        <ellipse cx="50" cy="91" rx="26" ry="4" fill="rgba(0,0,0,.1)"/>
+        <ellipse cx="28" cy="82" rx="12" ry="6" fill="#292524"/>
+        <ellipse cx="72" cy="82" rx="12" ry="6" fill="#292524"/>
+        <circle cx="50" cy="46" r="28" fill="#1C1917"/>
+        <ellipse cx="50" cy="61" rx="13" ry="8" fill="#292524"/>
+        <g id="cat-sleep-ear-l" style="transform-origin:28px 30px">
+          <polygon points="28,33 16,8 44,24" fill="#1C1917"/>
+          <polygon points="29,33 21,13 41,25" fill="#FDA4AF" opacity=".65"/>
+        </g>
+        <g id="cat-sleep-ear-r" style="transform-origin:72px 30px">
+          <polygon points="72,33 84,8 56,24" fill="#1C1917"/>
+          <polygon points="71,33 79,13 59,25" fill="#FDA4AF" opacity=".65"/>
+        </g>
+        <path d="M32,45 Q41,37 50,45" stroke="#FFE033" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <path d="M50,45 Q59,37 68,45" stroke="#FFE033" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <ellipse cx="30" cy="54" rx="7" ry="3.5" fill="#FDA4AF" opacity=".3"/>
+        <ellipse cx="70" cy="54" rx="7" ry="3.5" fill="#FDA4AF" opacity=".3"/>
+        <ellipse cx="50" cy="54" rx="3" ry="2" fill="#FDA4AF"/>
+        <path d="M46,58 Q50,60 54,58" stroke="#FDA4AF" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div class="cat-zzz"><span>z</span><span>z</span><span>Z</span></div>
+      <p class="state-sub" style="margin-top:12px">All caught up! Come back later.</p>
     </div>
 
     <!-- Pre-session -->
     <div id="state-prestart" class="state-block hidden">
-      <div class="prestart-art">☕</div>
-      <h2 class="state-title">Ready to brew?</h2>
-      <p class="state-sub">A 5-minute review session awaits.</p>
-      <div class="due-badge" id="due-badge">0 words due</div>
+      <canvas id="ring-prestart" class="ring-canvas" width="170" height="170"></canvas>
+      <div id="lang-picker" class="lang-picker hidden"></div>
       <button class="primary-btn" id="start-btn">Start Brewing →</button>
     </div>
 
@@ -86,43 +135,122 @@
           <div class="flip-inner" id="flip-inner">
             <!-- FRONT -->
             <div class="flip-front">
-              <div class="flip-context" id="flip-context"></div>
-              <div class="flip-word" id="flip-word"></div>
-              <div class="flip-pos" id="flip-pos-front"></div>
-              <div class="flip-hint">tap to reveal</div>
+              <div class="flip-header">
+                <div class="flip-context" id="flip-context"></div>
+                <div class="flip-word" id="flip-word"></div>
+                <div class="flip-pos" id="flip-pos-front"></div>
+              </div>
+              <div class="flip-footer">
+                <div class="flip-quiz hidden" id="flip-quiz"></div>
+                <div class="flip-hint">tap to reveal</div>
+              </div>
             </div>
             <!-- BACK -->
             <div class="flip-back">
-              <div class="flip-word-sm" id="flip-word-back"></div>
-              <div class="flip-phonetic-row">
-                <span class="flip-phonetic" id="flip-phonetic"></span>
-                <button class="mini-play-btn" id="flip-play-btn">♪</button>
+              <div class="flip-back-header">
+                <div class="flip-back-word-row">
+                  <span class="flip-word-sm" id="flip-word-back"></span>
+                  <button class="mini-play-btn" id="flip-play-btn" title="Pronounce"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg></button>
+                </div>
+                <div class="flip-phonetic" id="flip-phonetic"></div>
               </div>
-              <div class="flip-definition" id="flip-definition"></div>
-              <div class="flip-example" id="flip-example"></div>
-              <div class="flip-synonyms" id="flip-synonyms"></div>
+              <div class="flip-back-body">
+                <span class="flip-pos-back" id="flip-pos-back"></span>
+                <div class="flip-definition" id="flip-definition"></div>
+                <div class="flip-example" id="flip-example"></div>
+                <div class="flip-synonyms" id="flip-synonyms"></div>
+                <div class="flip-antonyms" id="flip-antonyms"></div>
+                <div class="flip-context-sentence hidden" id="flip-context-sentence"></div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
+      <div id="practice-banner" class="practice-banner hidden">⚡ Practice mode — no SRS update</div>
       <div class="grade-row hidden" id="grade-row">
-        <button class="grade-btn g-again" data-grade="0">Again<br><span>🌧️</span></button>
+        <button class="grade-btn g-again" data-grade="0">Again<br><span>😿</span></button>
         <button class="grade-btn g-hard"  data-grade="1">Hard<br><span>😅</span></button>
-        <button class="grade-btn g-good"  data-grade="3">Good<br><span>☕</span></button>
+        <button class="grade-btn g-good"  data-grade="3">Good<br><span>😸</span></button>
         <button class="grade-btn g-easy"  data-grade="5">Easy<br><span>🚀</span></button>
       </div>
     </div>
 
     <!-- Session done -->
     <div id="state-done" class="state-block hidden">
-      <div class="done-anim" id="done-anim">☕</div>
-      <h2 class="state-title">Brew complete!</h2>
+      <!-- Celebrating cat head + raised paws + sparkles -->
+      <svg id="cat-celebrate" class="cat-mascot cat-anim-celebrate" width="120" height="115" viewBox="0 0 120 115" xmlns="http://www.w3.org/2000/svg">
+        <!-- sparkles -->
+        <circle cx="14" cy="30" r="5" fill="#FFE033" style="animation:sparkle 1.3s ease-in-out infinite"/>
+        <circle cx="106" cy="24" r="3.5" fill="#0D9488" style="animation:sparkle 1.3s ease-in-out infinite;animation-delay:.45s"/>
+        <circle cx="8" cy="66" r="3" fill="#FDA4AF" style="animation:sparkle 1.3s ease-in-out infinite;animation-delay:.9s"/>
+        <circle cx="112" cy="60" r="4" fill="#FFE033" style="animation:sparkle 1.3s ease-in-out infinite;animation-delay:.2s"/>
+        <circle cx="98" cy="14" r="2.5" fill="#FDA4AF" style="animation:sparkle 1.3s ease-in-out infinite;animation-delay:.7s"/>
+        <circle cx="22" cy="10" r="3" fill="#0D9488" style="animation:sparkle 1.3s ease-in-out infinite;animation-delay:.55s"/>
+        <!-- UFO shadow -->
+        <ellipse cx="60" cy="112" rx="42" ry="4" fill="rgba(0,0,0,.12)"/>
+        <!-- UFO dome body — drawn first so cat head overlaps it -->
+        <path d="M14,85 Q10,112 60,113 Q110,112 106,85 Z" fill="#0F766E"/>
+        <!-- raised paws (above saucer rim) -->
+        <ellipse cx="14" cy="62" rx="12" ry="10" fill="#292524" transform="rotate(-28,14,62)"/>
+        <ellipse cx="106" cy="62" rx="12" ry="10" fill="#292524" transform="rotate(28,106,62)"/>
+        <!-- cat head + body — drawn before saucer so rim clips lower body -->
+        <circle cx="60" cy="54" r="28" fill="#1C1917"/>
+        <!-- chest fluff (mostly hidden by saucer deck) -->
+        <ellipse cx="60" cy="70" rx="14" ry="8" fill="#292524"/>
+        <!-- ears -->
+        <g id="cat-celebrate-ear-l" style="transform-origin:38px 36px">
+          <polygon points="36,40 22,12 52,28" fill="#1C1917"/>
+          <polygon points="37,40 27,18 49,29" fill="#FDA4AF" opacity=".65"/>
+        </g>
+        <g id="cat-celebrate-ear-r" style="transform-origin:82px 36px">
+          <polygon points="84,40 98,12 68,28" fill="#1C1917"/>
+          <polygon points="83,40 93,18 71,29" fill="#FDA4AF" opacity=".65"/>
+        </g>
+        <!-- UFO saucer — drawn after cat, covers lower body -->
+        <ellipse cx="60" cy="89" rx="52" ry="12" fill="#0F766E"/>
+        <ellipse cx="60" cy="85" rx="46" ry="9" fill="#0D9488"/>
+        <ellipse cx="60" cy="80" rx="38" ry="4.5" fill="#2DD4BF" opacity=".18"/>
+        <!-- UFO portholes -->
+        <circle cx="28" cy="85" r="5" fill="#FFE033"/>
+        <circle cx="60" cy="87" r="5" fill="#FFE033"/>
+        <circle cx="92" cy="85" r="5" fill="#FFE033"/>
+        <!-- face — drawn last, always above saucer rim (all y < 76) -->
+        <g id="cat-celebrate-eye-l" style="transform-origin:46px 50px">
+          <path d="M37,57 Q46,47 55,57" stroke="#FFE033" stroke-width="3" fill="none" stroke-linecap="round"/>
+        </g>
+        <g id="cat-celebrate-eye-r" style="transform-origin:74px 50px">
+          <path d="M65,57 Q74,47 83,57" stroke="#FFE033" stroke-width="3" fill="none" stroke-linecap="round"/>
+        </g>
+        <ellipse cx="41" cy="63" rx="8" ry="4" fill="#FDA4AF" opacity=".4"/>
+        <ellipse cx="79" cy="63" rx="8" ry="4" fill="#FDA4AF" opacity=".4"/>
+        <ellipse cx="60" cy="62" rx="3" ry="2" fill="#FDA4AF"/>
+        <path id="cat-celebrate-mouth" d="M53,66 Q60,74 67,66" stroke="#FDA4AF" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <g id="cat-celebrate-whi-l" style="transform-origin:46px 63px">
+          <line x1="22" y1="61" x2="52" y2="63" stroke="rgba(255,255,255,.5)" stroke-width="1.1" stroke-linecap="round"/>
+          <line x1="22" y1="65" x2="52" y2="65" stroke="rgba(255,255,255,.5)" stroke-width="1.1" stroke-linecap="round"/>
+        </g>
+        <g id="cat-celebrate-whi-r" style="transform-origin:74px 63px">
+          <line x1="98" y1="61" x2="68" y2="63" stroke="rgba(255,255,255,.5)" stroke-width="1.1" stroke-linecap="round"/>
+          <line x1="98" y1="65" x2="68" y2="65" stroke="rgba(255,255,255,.5)" stroke-width="1.1" stroke-linecap="round"/>
+        </g>
+      </svg>
+      <h2 class="state-title" id="done-title">Brew complete!</h2>
       <div class="done-stats">
         <div class="stat-chip"><span id="done-count">0</span><em>reviewed</em></div>
         <div class="stat-chip"><span id="done-streak">0</span><em>day streak</em></div>
       </div>
+      <div id="grade-breakdown" class="grade-breakdown"></div>
       <button class="secondary-btn" id="done-again-btn">Review More</button>
+      <button class="rebrew-btn hidden" id="rebrew-btn">Re-brew weak words ⚡</button>
+      <div id="brew-story-done" class="brew-story-card hidden">
+        <div class="brew-story-title">☕ Today's Brew Story</div>
+        <div class="brew-story-body"></div>
+        <div class="brew-story-footer">
+          <button class="brew-copy-btn" id="brew-done-copy-btn">Copy</button>
+          <button class="brew-regen-btn" id="brew-done-regen-btn">✦ New story</button>
+        </div>
+      </div>
     </div>
 
   </section>
@@ -137,6 +265,8 @@
         <option value="az">A → Z</option>
       </select>
     </div>
+    <div id="filter-chips-row" class="filter-chips-row"></div>
+    <div class="words-stats-row" id="words-stats-row"></div>
     <div id="word-list" class="word-list"></div>
     <div id="word-empty" class="word-empty hidden">
       <p>No words yet. Go sip some! ☕</p>
@@ -148,13 +278,26 @@
     <div class="settings-scroll">
 
       <div class="settings-section">
-        <div class="settings-label">AI Example Sentences</div>
-        <p class="settings-hint">Paste a free <a href="https://aistudio.google.com/app/apikey" target="_blank">Google Gemini API key</a> to unlock AI-generated contextual example sentences.</p>
-        <div class="key-row">
-          <input class="settings-input" id="gemini-key-input" type="password" placeholder="AIzaSy…">
-          <button class="save-key-btn" id="save-key-btn">Save</button>
+        <div class="settings-label">AI Provider</div>
+        <div class="ai-status ai-status--idle" id="ai-status">Not configured</div>
+        <p class="settings-hint">Any OpenAI-compatible endpoint — works with <strong>DeepSeek</strong>, <strong>OpenRouter</strong>, <strong>LM Studio</strong>, <strong>Ollama</strong>, and more.</p>
+        <div class="ai-presets">
+          <button class="preset-btn" data-url="https://api.deepseek.com" data-model="deepseek-chat">DeepSeek</button>
+          <button class="preset-btn" data-url="https://openrouter.ai/api/v1" data-model="">OpenRouter</button>
+          <button class="preset-btn" data-url="http://localhost:1234" data-model="">LM Studio</button>
+          <button class="preset-btn" data-url="http://localhost:11434" data-model="">Ollama</button>
         </div>
-        <div class="key-status" id="key-status"></div>
+        <div class="settings-field-label">API URL</div>
+        <input class="settings-input" id="api-url-input" type="url" placeholder="https://api.deepseek.com" autocomplete="off">
+        <div class="settings-field-label">API Key <em>(optional for local models)</em></div>
+        <input class="settings-input" id="api-key-input" type="password" placeholder="sk-…" autocomplete="off">
+        <div class="settings-field-label">Model <em>(leave blank to auto-detect)</em></div>
+        <input class="settings-input" id="api-model-input" type="text" placeholder="auto-detect" autocomplete="off">
+        <div class="key-row" style="margin-top:8px">
+          <button class="save-key-btn" id="save-ai-btn">Save</button>
+          <button class="test-key-btn" id="test-ai-btn">Test</button>
+        </div>
+        <p class="settings-hint warn">⚠ Keys are stored locally in your browser and never sent to our servers.</p>
       </div>
 
       <div class="settings-section">
@@ -174,11 +317,24 @@
           <input type="checkbox" id="music-toggle" class="toggle-input" checked>
           <span class="toggle-track"></span>
         </label>
+        <div class="volume-row">
+          <span class="volume-label">Volume</span>
+          <input type="range" id="volume-slider" class="volume-slider" min="0" max="100" value="40" step="1">
+          <span class="volume-val" id="volume-val">40%</span>
+        </div>
+        <div id="stream-url-row" class="stream-url-row">
+          <input class="settings-input" id="stream-url-input" type="url" placeholder="Paste MP3 stream URL…">
+          <button class="save-key-btn" id="save-stream-btn">Save</button>
+        </div>
+        <p class="settings-hint" id="stream-hint">Paste any MP3 radio stream URL · e.g. lofi.cafe, soma.fm</p>
       </div>
 
       <div class="settings-section danger-zone">
         <div class="settings-label">Data</div>
         <button class="danger-btn" id="export-btn">Export word book (JSON)</button>
+        <button class="danger-btn" id="anki-export-btn">Export for Anki (TSV)</button>
+        <button class="danger-btn" id="import-btn">Import word book (JSON)</button>
+        <input type="file" id="import-file" accept=".json" style="display:none">
         <button class="danger-btn red" id="clear-btn">Clear all words</button>
       </div>
 
@@ -206,6 +362,44 @@
 <!-- TOAST -->
 <div class="toast hidden" id="toast"></div>
 
+<!-- WORD DETAIL OVERLAY -->
+<div id="word-detail-overlay" class="word-detail-overlay hidden">
+  <div class="word-detail-panel">
+    <div class="detail-header">
+      <button class="detail-close-btn" id="detail-close-btn">✕</button>
+      <span class="detail-meta-badge" id="detail-meta-badge"></span>
+    </div>
+    <div class="detail-scroll">
+      <div class="detail-word" id="detail-word"></div>
+      <div class="detail-phonetic-row">
+        <span class="detail-phonetic" id="detail-phonetic"></span>
+        <button class="mini-play-btn" id="detail-play-btn" title="Pronounce"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg></button>
+      </div>
+      <span class="detail-pos" id="detail-pos"></span>
+      <div class="detail-definition" id="detail-definition"></div>
+      <div class="detail-example hidden" id="detail-example"></div>
+      <div class="detail-ai-loading hidden" id="detail-ai-loading">✨ Generating AI example…</div>
+      <div class="detail-synonyms" id="detail-synonyms"></div>
+      <div class="detail-antonyms hidden" id="detail-antonyms"></div>
+      <div class="detail-context-sentence hidden" id="detail-context-sentence"></div>
+      <div class="detail-ai-feature hidden" id="detail-memory-hook">
+        <div class="detail-ai-label">💡 Memory Hook</div>
+        <div class="detail-ai-content" id="detail-memory-hook-text"></div>
+      </div>
+      <div class="detail-ai-feature hidden" id="detail-word-roots">
+        <div class="detail-ai-label">🌱 Word Roots</div>
+        <div class="detail-roots-chips" id="detail-roots-chips"></div>
+      </div>
+      <div class="detail-stats-row" id="detail-stats-row"></div>
+    </div>
+    <div class="detail-footer">
+      <button class="primary-btn detail-review-btn hidden" id="detail-review-btn">Start reviewing →</button>
+      <button class="secondary-btn detail-delete-btn" id="detail-delete-btn">Remove word</button>
+    </div>
+  </div>
+</div>
+
+<script src="cat-animator.js"></script>
 <script src="popup.js"></script>
 </body>
 </html>

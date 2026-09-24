@@ -1,17 +1,65 @@
 // ── STATE ─────────────────────────────────────────────────────
-let tipHost  = null;
-let cardHost = null;
-let selTimer = null;
-let currentWord = '';
+let cardHost      = null;
+let selTimer      = null;
+let hoverTimer    = null;
+let currentWord   = '';
+let currentRect   = null;
+let currentContext = '';
+let currentLang   = 'en';
+let prefetch      = null;   // { word, lang, done, result, handlers[] }
+let cardAutoSaved = false;  // true when card opened via selection (auto-saved)
+
+// ── LANGUAGE DETECTION ────────────────────────────────────────
+function detectLang(word) {
+  const w = word.toLowerCase();
+  if (/[ñ]/.test(w)) return 'es';
+  if (/[å]/.test(w)) return 'sv';
+  if (/[äö]/.test(w)) {
+    const pg = (document.documentElement.lang || '').toLowerCase().split('-')[0];
+    return pg === 'sv' ? 'sv' : 'fi';
+  }
+  if (/[áéíóú]/.test(w)) return 'es';
+  const pg = (document.documentElement.lang || '').toLowerCase().split('-')[0];
+  if (pg === 'es' || pg === 'fi' || pg === 'sv') return pg;
+  return 'en';
+}
+
+function extractSentence(sel) {
+  try {
+    const range = sel.getRangeAt(0);
+    const node  = range.startContainer;
+    if (node.nodeType !== Node.TEXT_NODE) return '';
+    const full  = node.textContent || '';
+    const start = range.startOffset;
+    let sStart = 0;
+    for (let i = start - 1; i >= 0; i--) {
+      if ('.!?'.includes(full[i])) { sStart = i + 1; break; }
+    }
+    let sEnd = full.length;
+    for (let i = start; i < full.length; i++) {
+      if ('.!?'.includes(full[i])) { sEnd = i + 1; break; }
+    }
+    return full.slice(sStart, sEnd).trim().replace(/\s+/g, ' ').slice(0, 200);
+  } catch (_) { return ''; }
+}
 
 // ── SELECTION DETECTION ───────────────────────────────────────
 document.addEventListener('mouseup', () => {
   clearTimeout(selTimer);
-  selTimer = setTimeout(onSelectionChange, 280);
+  selTimer = setTimeout(onSelectionChange, 80);
 });
 
+// ── HOVER DETECTION ───────────────────────────────────────────
+document.addEventListener('mousemove', (e) => {
+  clearTimeout(hoverTimer);
+  if (cardHost) return;
+  hoverTimer = setTimeout(() => triggerHoverLookup(e.clientX, e.clientY), 700);
+}, { capture: true, passive: true });
+
+document.addEventListener('mousedown', () => clearTimeout(hoverTimer), { capture: true });
+
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') { hideTip(); hideCard(); }
+  if (e.key === 'Escape') { hideCard(); }
 });
 
 function onSelectionChange() {
@@ -19,195 +67,354 @@ function onSelectionChange() {
   const text = sel?.toString().trim() ?? '';
 
   if (!text || text.length < 2 || text.length > 60 || /[\s\n]{2,}/.test(text) || /[0-9]/.test(text)) {
-    hideTip(); return;
+    return;
   }
   const active = document.activeElement?.tagName;
   if (active === 'INPUT' || active === 'TEXTAREA' || document.activeElement?.isContentEditable) {
-    hideTip(); return;
+    return;
   }
   const range = sel.getRangeAt(0);
   const rect  = range.getBoundingClientRect();
-  showTip(text, rect);
+  const ctx   = extractSentence(sel);
+  const lang  = detectLang(text);
+  currentContext = ctx;
+  currentWord    = text;
+  currentRect    = rect;
+  currentLang    = lang;
+
+  // Pre-fetch starts immediately; lookupWord reuses result if it arrives first
+  const pending = { word: text, lang, done: false, result: null, handlers: [] };
+  prefetch = pending;
+  try {
+    chrome.runtime.sendMessage({ type: 'LOOKUP', word: text, lang }, (result) => {
+      pending.done = true;
+      pending.result = result ?? null;
+      pending.handlers.forEach(h => h(result));
+      pending.handlers = [];
+    });
+  } catch (_) { pending.done = true; }
+
+  // Auto-save immediately; show card already in saved state
+  chrome.runtime.sendMessage({ type: 'SAVE_WORD', wordData: { word: text, lang } });
+  lookupWord(text, rect, {
+    lang,
+    autoSaved: true,
+    onReady: (result) => {
+      const enriched = ctx ? { ...result, contextSentence: ctx, lang } : { ...result, lang };
+      chrome.runtime.sendMessage({ type: 'UPDATE_WORD', wordData: enriched });
+    },
+  });
 }
 
-// ── TIP BUTTON ────────────────────────────────────────────────
-function showTip(word, rect) {
-  hideTip();
-  const host = document.createElement('div');
-  host.id = 'sip-tip-host';
-  const top = Math.max(rect.top - 46, 8);
-  Object.assign(host.style, {
-    position:  'fixed',
-    zIndex:    '2147483647',
-    left:      `${rect.left + rect.width / 2}px`,
-    top:       `${top}px`,
-    transform: 'translateX(-50%)',
-    pointerEvents: 'none',
-  });
+// ── WORD AT POINT (for hover) ─────────────────────────────────
+function wordAtPoint(x, y) {
+  const range = document.caretRangeFromPoint?.(x, y);
+  if (!range) return null;
+  const node = range.startContainer;
+  if (node.nodeType !== Node.TEXT_NODE) return null;
+  if (node.parentElement?.closest('a,button,input,textarea,select,[contenteditable],[role="button"]')) return null;
 
-  const shadow = host.attachShadow({ mode: 'open' });
-  shadow.innerHTML = `
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&display=swap');
-      .tip {
-        background: #1c1710;
-        border: 1px solid rgba(245,158,11,.45);
-        border-radius: 20px;
-        padding: 6px 14px 6px 10px;
-        font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-        font-size: 12px; font-weight: 700;
-        color: #f59e0b;
-        cursor: pointer; pointer-events: all;
-        white-space: nowrap;
-        box-shadow: 0 4px 20px rgba(0,0,0,.55), 0 0 0 1px rgba(245,158,11,.15);
-        animation: tipIn .18s cubic-bezier(.34,1.56,.64,1) forwards;
-        user-select: none; display: flex; align-items: center; gap: 5px;
-      }
-      .tip:hover { background: #261e14; border-color: rgba(245,158,11,.7); }
-      .tip:active { transform: scale(.96); }
-      @keyframes tipIn {
-        from { opacity:0; transform: translateY(6px) scale(.88); }
-        to   { opacity:1; transform: translateY(0)  scale(1); }
-      }
-    </style>
-    <div class="tip" id="btn">☕ Sip it</div>
-  `;
+  const text   = node.textContent;
+  const isLetter = /[a-zA-ZÀ-ÖØ-öø-ÿ]/;
+  let s = range.startOffset;
+  let e = s;
+  while (s > 0 && isLetter.test(text[s - 1])) s--;
+  while (e < text.length && isLetter.test(text[e])) e++;
+  const word = text.slice(s, e);
+  if (!word || word.length < 2 || word.length > 60) return null;
 
-  shadow.getElementById('btn').addEventListener('click', (e) => {
-    e.stopPropagation();
-    currentWord = word;
-    hideTip();
-    lookupWord(word);
-  });
-
-  document.body.appendChild(host);
-  tipHost = host;
-  setTimeout(() => { if (tipHost === host) hideTip(); }, 6000);
+  const wr = document.createRange();
+  wr.setStart(node, s);
+  wr.setEnd(node, e);
+  const rect = wr.getBoundingClientRect();
+  // Only apply bounds check when rect is valid (some nodes return zero rect)
+  if (rect.width > 0 && (x < rect.left - 6 || x > rect.right + 6 || y < rect.top - 6 || y > rect.bottom + 6)) return null;
+  return { word, rect };
 }
 
-function hideTip() { tipHost?.remove(); tipHost = null; }
+function triggerHoverLookup(x, y) {
+  const active = document.activeElement?.tagName;
+  if (active === 'INPUT' || active === 'TEXTAREA' || document.activeElement?.isContentEditable) return;
+  const hit = wordAtPoint(x, y);
+  if (!hit) return;
+  const lang     = detectLang(hit.word);
+  currentWord    = hit.word;
+  currentRect    = hit.rect;
+  currentContext = '';
+  currentLang    = lang;
+  lookupWord(hit.word, hit.rect, { lang });
+}
 
 // ── LOOKUP ────────────────────────────────────────────────────
-function lookupWord(word) {
-  showCard({ word, loading: true });
-  chrome.runtime.sendMessage({ type: 'LOOKUP', word }, (result) => {
-    if (!result || result.error) {
-      updateCardState({ error: true, word, message: result?.error ?? 'Something went wrong.' });
-    } else {
-      updateCardState(result);
-      if (result.geminiKeySet) {
-        chrome.runtime.sendMessage(
-          { type: 'AI_EXAMPLE', word: result.word, pos: result.pos, definition: result.definition },
-          (ai) => { if (ai?.example) updateCardAiExample(ai.example); }
-        );
+function handlePostLookup(result) {
+  if (result.aiAvailable) {
+    chrome.runtime.sendMessage(
+      { type: 'AI_EXAMPLE', word: result.word, pos: result.pos, definition: result.definition },
+      (ai) => {
+        if (chrome.runtime.lastError) return;
+        if (ai?.example) updateCardAiExample(ai.example);
+        else if (!result.example) insertNoExample('No example available for this word.');
       }
-    }
-  });
+    );
+  } else if (!result.example) {
+    insertNoExample('No example available for this word.');
+  }
 }
 
-// ── CARD ──────────────────────────────────────────────────────
+function lookupWord(word, rect, { onReady, autoSaved = false, lang = 'en' } = {}) {
+  const cached = (prefetch?.word === word && prefetch?.lang === lang) ? prefetch : null;
+  prefetch = null;
+
+  // Result already arrived — show instantly, no loading state
+  if (cached?.done) {
+    const result = cached.result;
+    if (!result || result.error) {
+      showCard({ error: true, word, message: result?.error || 'Something went wrong.' }, rect, { autoSaved });
+    } else {
+      showCard(result, rect, { autoSaved });
+      handlePostLookup(result);
+      onReady?.(result);
+    }
+    return;
+  }
+
+  // Show loading skeleton; hook into in-flight pre-fetch or start fresh
+  showCard({ word, loading: true }, rect, { autoSaved });
+
+  const safetyTimer = setTimeout(() => {
+    updateCardState({ error: true, word, message: 'Request timed out — reload the page and try again.' });
+  }, 12000);
+
+  const onResult = (result) => {
+    clearTimeout(safetyTimer);
+    if (chrome.runtime.lastError || !result || result.error) {
+      const msg = chrome.runtime.lastError?.message?.includes('context')
+        ? 'Reload the page to reconnect the extension.'
+        : (result?.error || 'Something went wrong.');
+      updateCardState({ error: true, word, message: msg });
+      return;
+    }
+    updateCardState(result);
+    handlePostLookup(result);
+    onReady?.(result);
+  };
+
+  if (cached) {
+    cached.handlers.push(onResult);
+  } else {
+    try {
+      chrome.runtime.sendMessage({ type: 'LOOKUP', word, lang }, onResult);
+    } catch (e) {
+      clearTimeout(safetyTimer);
+      updateCardState({ error: true, word, message: 'Reload the page to reconnect the extension.' });
+    }
+  }
+}
+
+// ── CARD POSITIONING ─────────────────────────────────────────
+// Returns a CSS rule string; used in shadow adoptedStyleSheets (no inline style needed)
+function cardPositionCSS(rect) {
+  const W = 316, PAD = 10;
+  if (!rect) {
+    return `.card{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:${W}px;pointer-events:all}`;
+  }
+  const vw = window.innerWidth, vh = window.innerHeight;
+  let left = (rect.left + rect.width / 2) - W / 2;
+  left = Math.max(PAD, Math.min(left, vw - W - PAD));
+  let top = rect.bottom + 8;
+  if (top + 380 > vh) top = Math.max(PAD, rect.top - 380 - 8);
+  return `.card{position:fixed;top:${top}px;left:${left}px;width:${W}px;pointer-events:all}`;
+}
+
+// Cached static card stylesheet (parsed once, reused every showCard call)
+let _cardSheet = null;
+function getCardSheet() {
+  if (!_cardSheet) {
+    _cardSheet = new CSSStyleSheet();
+    _cardSheet.replaceSync(CARD_CSS);
+  }
+  return _cardSheet;
+}
+
+// Inject host positioning into document.adoptedStyleSheets once.
+// CSSStyleSheet constructed in JS is exempt from page CSP style-src.
+let _docSheet = null;
+function ensureDocSheet() {
+  if (_docSheet) return;
+  try {
+    _docSheet = new CSSStyleSheet();
+    _docSheet.replaceSync('#sip-card-host{position:fixed;top:0;left:0;z-index:2147483646;pointer-events:none}');
+    document.adoptedStyleSheets = [...(document.adoptedStyleSheets ?? []), _docSheet];
+  } catch (_) {}
+}
+
+// ── CARD CSS ──────────────────────────────────────────────────
+// @import removed — fonts loaded via <link> in shadow DOM instead
 const CARD_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
   *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-  .backdrop {
-    position:fixed; inset:0; z-index:2147483645;
-    background:rgba(0,0,0,.42); backdrop-filter:blur(3px);
-    animation:fadeIn .2s ease;
-  }
+
   .card {
-    position:fixed; top:50%; left:50%;
-    transform:translate(-50%,-50%);
-    width:340px;
-    background:linear-gradient(160deg,#1e1810,#110d08);
-    border:1px solid rgba(245,158,11,.22);
-    border-radius:20px;
-    box-shadow:0 28px 90px rgba(0,0,0,.75),0 0 0 1px rgba(255,255,255,.05),0 0 50px rgba(245,158,11,.07);
-    z-index:2147483646;
-    overflow:hidden;
-    font-family:'Plus Jakarta Sans',system-ui,sans-serif;
-    color:#fef9ee;
-    animation:cardIn .28s cubic-bezier(.34,1.3,.64,1);
+    background: #FFFFFF;
+    border: 1.5px solid #E7E5E4;
+    border-top: 3px solid #F59E0B;
+    box-shadow: 0 12px 40px rgba(0,0,0,.16), 0 4px 12px rgba(0,0,0,.08);
+    z-index: 2147483646;
+    overflow: hidden;
+    font-family: 'Plus Jakarta Sans', 'Helvetica Neue', sans-serif;
+    color: #1C1917;
+    animation: cardIn .22s cubic-bezier(.34,1.3,.64,1);
+    max-height: 420px; overflow-y: auto;
   }
-  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
   @keyframes cardIn {
-    from{opacity:0;transform:translate(-50%,calc(-50% + 18px)) scale(.93)}
-    to  {opacity:1;transform:translate(-50%,-50%) scale(1)}
+    from { opacity:0; transform: translateY(10px) scale(.97); }
+    to   { opacity:1; transform: translateY(0)    scale(1); }
   }
 
   /* Loading */
-  .loading-body { padding:28px 22px 24px; }
-  .loading-word { font-family:'Playfair Display',Georgia,serif; font-size:26px; font-weight:700; margin-bottom:18px; }
-  .skel { height:11px; border-radius:6px; background:linear-gradient(90deg,rgba(255,255,255,.05) 25%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.05) 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; margin-bottom:8px; }
-  .skel.w60{width:60%} .skel.w80{width:80%} .skel.w45{width:45%}
+  .loading-body { padding:20px 18px 22px; background:#FFFFFF; }
+  .loading-word { font-family:'Playfair Display',Georgia,serif; font-size:26px; font-weight:700; margin-bottom:16px; color:#1C1917; }
+  .skel { height:10px; background:linear-gradient(90deg,#F5F3EF 25%,#EDE9E3 50%,#F5F3EF 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; margin-bottom:8px; }
+  .skel.w60{width:60%} .skel.w80{width:80%} .skel.w45{width:45%} .skel.mt{margin-top:14px}
   @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
-  /* Header */
-  .card-head { padding:18px 18px 14px; border-bottom:1px solid rgba(255,237,190,.07); position:relative; }
+  /* Header band */
+  .card-head {
+    padding:16px 18px 13px;
+    background:linear-gradient(145deg,#FEF3C7 0%,#FEFCE8 100%);
+    border-bottom:1.5px solid rgba(245,158,11,.18);
+    position:relative;
+  }
+  .card-head::before {
+    content:''; position:absolute; left:0; top:0; bottom:0; width:4px;
+    background:#F59E0B;
+  }
   .close-btn {
-    position:absolute; top:14px; right:14px;
-    background:rgba(255,255,255,.06); border:none; border-radius:50%;
-    width:26px; height:26px; cursor:pointer; color:rgba(254,249,238,.45);
-    font-size:13px; display:flex; align-items:center; justify-content:center;
+    position:absolute; top:12px; right:13px;
+    background:#F5F3EF; border:1.5px solid #E7E5E4;
+    width:24px; height:24px; cursor:pointer; color:#A8A29E;
+    font-size:11px; display:flex; align-items:center; justify-content:center;
     transition:all .15s; line-height:1;
   }
-  .close-btn:hover { background:rgba(255,255,255,.12); color:#fef9ee; }
-  .card-word { font-family:'Playfair Display',Georgia,serif; font-size:28px; font-weight:700; line-height:1.15; padding-right:36px; margin-bottom:8px; }
-  .card-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-  .phonetic { font-family:'DM Mono','Courier New',monospace; font-size:11.5px; color:rgba(254,249,238,.4); }
+  .close-btn:hover { background:#FFF1F2; border-color:#F43F5E; color:#F43F5E; }
+  .card-word { font-family:'Playfair Display',Georgia,serif; font-size:27px; font-weight:700; line-height:1.15; padding-right:34px; margin-bottom:7px; color:#1C1917; }
+  .card-meta { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+  .phonetic { font-family:'DM Mono',monospace; font-size:11px; color:#A8A29E; }
   .play-btn {
-    background:rgba(245,158,11,.14); border:1px solid rgba(245,158,11,.3);
-    border-radius:50%; width:22px; height:22px; cursor:pointer;
-    color:#f59e0b; font-size:10px; display:flex; align-items:center; justify-content:center;
+    background:#FEF3C7; border:1px solid rgba(245,158,11,.4);
+    width:24px; height:24px; cursor:pointer;
+    color:#D97706; font-size:11px; display:flex; align-items:center; justify-content:center;
     transition:all .15s; flex-shrink:0;
   }
-  .play-btn:hover { background:rgba(245,158,11,.28); }
-  .pos-tag { font-size:9px; font-weight:700; letter-spacing:.9px; text-transform:uppercase; background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.22); border-radius:20px; padding:2px 8px; color:#f59e0b; }
+  .play-btn:hover { background:#F59E0B; color:#fff; }
+  .pos-tag { font-size:10px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; background:#FEF3C7; border:1px solid rgba(245,158,11,.3); padding:2px 9px; color:#D97706; }
 
   /* Body */
-  .card-body { padding:14px 18px 18px; }
-  .definition { font-size:13px; line-height:1.65; color:rgba(254,249,238,.88); margin-bottom:12px; }
-  .example-wrap { border-left:2px solid rgba(245,158,11,.28); padding-left:10px; margin-bottom:14px; }
-  .example { font-size:12px; line-height:1.7; color:rgba(254,249,238,.5); font-style:italic; }
-  .ai-badge { display:inline-block; font-size:8px; font-weight:700; letter-spacing:.7px; text-transform:uppercase; color:rgba(110,231,183,.65); background:rgba(110,231,183,.1); border:1px solid rgba(110,231,183,.2); border-radius:10px; padding:1px 6px; margin-left:5px; vertical-align:middle; font-style:normal; }
-  .synonyms { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:16px; }
-  .syn { font-size:11px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:20px; padding:3px 10px; color:rgba(254,249,238,.6); cursor:pointer; transition:all .15s; }
-  .syn:hover { background:rgba(245,158,11,.12); border-color:rgba(245,158,11,.3); color:#f59e0b; }
+  .card-body { padding:13px 18px 16px; background:#FFFFFF; }
+  .definition { font-size:13px; line-height:1.65; color:#57534E; margin-bottom:10px; }
+  .example-wrap { border-left:2.5px solid #F59E0B; padding-left:10px; margin-bottom:12px; }
+  .example { font-size:12px; line-height:1.7; color:#A8A29E; font-style:italic; font-family:'DM Mono',monospace; }
+  .ai-badge { display:inline-block; font-size:9px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:#15803D; background:#DCFCE7; border:1px solid rgba(34,197,94,.3); padding:1px 7px; margin-left:5px; vertical-align:middle; font-style:normal; }
+  .synonyms { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:13px; }
+  .syn {
+    font-size:11px; background:#F5F3EF; border:1px solid #E7E5E4;
+    padding:3px 10px; color:#78716C; cursor:pointer; transition:all .15s;
+  }
+  .syn:hover { background:#FEF3C7; border-color:rgba(245,158,11,.4); color:#D97706; }
 
   /* Add button */
   .add-btn {
-    width:100%; padding:10px 14px; border:none; border-radius:12px;
-    background:linear-gradient(135deg,#92400e,#f59e0b);
-    color:#fff; font-family:inherit; font-size:13px; font-weight:700; cursor:pointer;
-    box-shadow:0 4px 18px rgba(245,158,11,.28);
+    width:100%; padding:11px 14px; border:none;
+    background:#F59E0B; color:#fff;
+    font-family:'Plus Jakarta Sans',sans-serif; font-size:13px; font-weight:800;
+    cursor:pointer; box-shadow:0 4px 0 #92400E;
     display:flex; align-items:center; justify-content:center; gap:7px;
-    transition:all .2s;
+    transition:transform .08s, box-shadow .08s;
   }
-  .add-btn:hover { filter:brightness(1.1); transform:translateY(-1px); box-shadow:0 6px 24px rgba(245,158,11,.38); }
-  .add-btn:active { transform:translateY(0); }
-  .add-btn.done { background:linear-gradient(135deg,#065f46,#6ee7b7); box-shadow:0 4px 18px rgba(110,231,183,.25); }
-  .add-btn.exists { background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); box-shadow:none; cursor:default; transform:none; }
+  .add-btn:hover  { transform:translateY(-1px); box-shadow:0 5px 0 #92400E; }
+  .add-btn:active { transform:translateY(3px);  box-shadow:0 1px 0 #92400E; }
+  .add-btn.done   { background:#22C55E; box-shadow:0 4px 0 #15803D; }
+  .add-btn.exists { background:#F5F3EF; color:#A8A29E; box-shadow:none; cursor:default; }
+  .add-btn.exists:hover  { transform:none; box-shadow:none; }
+  .add-btn.exists:active { transform:none; }
+
+  /* No-example fallback */
+  .no-example {
+    font-size:11.5px; color:#A8A29E; font-style:italic;
+    padding:0 0 12px; line-height:1.6;
+  }
+  .no-example .hint-key {
+    color:#D97706; font-weight:700; font-style:normal; cursor:pointer;
+    text-decoration:underline; text-decoration-color:rgba(245,158,11,.4);
+  }
 
   /* Error */
-  .error-body { padding:28px 22px 24px; text-align:center; }
-  .error-icon { font-size:36px; margin-bottom:12px; }
-  .error-title { font-size:14px; font-weight:600; color:rgba(254,249,238,.8); margin-bottom:5px; }
-  .error-sub { font-size:12px; color:rgba(254,249,238,.38); line-height:1.5; }
+  .error-body { padding:28px 18px 20px; text-align:center; background:#FFFFFF; }
+  .error-icon { font-size:36px; margin-bottom:10px; }
+  .error-title { font-size:14px; font-weight:700; color:#1C1917; margin-bottom:5px; }
+  .error-sub { font-size:12px; color:#A8A29E; line-height:1.55; margin-bottom:16px; }
+  .error-body .add-btn { margin-top:0; }
+
+  /* Remove link */
+  .remove-link {
+    text-align:center; font-size:11px; color:#A8A29E;
+    cursor:pointer; padding:6px 0 2px;
+    text-decoration:underline; text-decoration-color:rgba(168,162,158,.35);
+    transition:color .15s;
+  }
+  .remove-link:hover { color:#F43F5E; text-decoration-color:rgba(244,63,94,.4); }
 `;
 
-function showCard(data) {
-  hideCard();
+// ── SHOW CARD ─────────────────────────────────────────────────
+// Uses CSSStyleSheet / adoptedStyleSheets throughout — no <style> blocks,
+// no element.style assignments — both are blocked by page CSP style-src.
+function showCard(data, rect, { autoSaved = false } = {}) {
+  cardHost?.remove();
+  cardHost = null;
+  cardAutoSaved = autoSaved;
+
+  ensureDocSheet();
+
   const host = document.createElement('div');
   host.id = 'sip-card-host';
   document.body.appendChild(host);
   cardHost = host;
 
   const shadow = host.attachShadow({ mode: 'open' });
-  shadow.innerHTML = `<style>${CARD_CSS}</style>
-    <div class="backdrop" id="backdrop"></div>
-    <div class="card" id="card">${data.loading ? renderLoading(data.word) : renderFull(data)}</div>`;
 
-  shadow.getElementById('backdrop').addEventListener('click', hideCard);
+  // Google Fonts via <link> — external stylesheet, allowed by CSP (fonts.googleapis.com is in style-src)
+  const fontLink = document.createElement('link');
+  fontLink.rel  = 'stylesheet';
+  fontLink.href = 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap';
+  shadow.appendChild(fontLink);
+
+  // Dynamic position sheet (per-show); static card styles reused from cache
+  const posSheet = new CSSStyleSheet();
+  posSheet.replaceSync(cardPositionCSS(rect));
+  shadow.adoptedStyleSheets = [getCardSheet(), posSheet];
+
+  // Card element (no <style> tag in innerHTML)
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.id = 'card';
+  card.innerHTML = data.loading ? renderLoading(data.word) : renderFull(data);
+  shadow.appendChild(card);
+
   bindCardButtons(shadow, data);
+  bindOutsideClick();
+}
+
+// Dismiss when clicking outside the card
+function bindOutsideClick() {
+  const handler = (e) => {
+    if (!cardHost) { document.removeEventListener('mousedown', handler, true); return; }
+    const path = e.composedPath();
+    if (!path.includes(cardHost)) {
+      hideCard();
+      document.removeEventListener('mousedown', handler, true);
+    }
+  };
+  // Delay so the current click doesn't immediately close it
+  setTimeout(() => document.addEventListener('mousedown', handler, true), 80);
 }
 
 function renderLoading(word) {
@@ -216,7 +423,7 @@ function renderLoading(word) {
       <div class="loading-word">${esc(word)}</div>
       <div class="skel w80"></div>
       <div class="skel w60"></div>
-      <div class="skel w45" style="margin-top:14px"></div>
+      <div class="skel w45 mt"></div>
     </div>`;
 }
 
@@ -225,8 +432,9 @@ function renderFull(data) {
     return `
       <div class="error-body">
         <div class="error-icon">🍵</div>
-        <div class="error-title">Word not found</div>
+        <div class="error-title">${data.word ? esc(data.word) : 'Word not found'}</div>
         <div class="error-sub">${esc(data.message)}</div>
+        <button class="add-btn" id="add-btn">☕ SIP IT ANYWAY</button>
       </div>`;
   }
 
@@ -241,7 +449,7 @@ function renderFull(data) {
       <div class="card-word">${esc(data.word)}</div>
       <div class="card-meta">
         ${data.phonetic ? `<span class="phonetic">${esc(data.phonetic)}</span>` : ''}
-        ${data.audioUrl ? `<button class="play-btn" id="play-btn" title="Play pronunciation">♪</button>` : ''}
+        <button class="play-btn" id="play-btn" title="Pronounce"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg></button>
         ${data.pos ? `<span class="pos-tag">${esc(data.pos)}</span>` : ''}
       </div>
     </div>
@@ -249,47 +457,82 @@ function renderFull(data) {
       ${data.definition ? `<div class="definition">${esc(data.definition)}</div>` : ''}
       ${exampleHtml}
       ${syns ? `<div class="synonyms">${syns}</div>` : ''}
-      <button class="add-btn" id="add-btn">Add to Sip ☕</button>
+      <button class="add-btn" id="add-btn">☕ SIP IT</button>
     </div>`;
+}
+
+const LANG_BCP47 = { en: 'en-US', es: 'es-ES', fi: 'fi-FI', sv: 'sv-SE' };
+
+function speakWord(word, lang = 'en') {
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const utt  = new SpeechSynthesisUtterance(word);
+  utt.lang   = LANG_BCP47[lang] || 'en-US';
+  utt.rate   = 0.85;
+  utt.pitch  = 1;
+  speechSynthesis.speak(utt);
 }
 
 function bindCardButtons(shadow, data) {
   shadow.getElementById('close-btn')?.addEventListener('click', hideCard);
 
   shadow.getElementById('play-btn')?.addEventListener('click', () => {
-    if (data.audioUrl) new Audio(data.audioUrl).play().catch(() => {});
+    const lang = data.lang || currentLang || 'en';
+    if (data.audioUrl) new Audio(data.audioUrl).play().catch(() => speakWord(data.word, lang));
+    else speakWord(data.word, lang);
   });
 
   shadow.querySelectorAll('.syn').forEach(el => {
     el.addEventListener('click', () => {
       const w = el.dataset.word;
-      if (w) { hideCard(); currentWord = w; lookupWord(w); }
+      if (w) { hideCard(); currentWord = w; lookupWord(w, currentRect); }
     });
   });
 
   const addBtn = shadow.getElementById('add-btn');
-  if (addBtn && !data.error) {
-    chrome.runtime.sendMessage({ type: 'CHECK_SAVED', word: data.word }, (r) => {
-      if (r?.saved) {
-        addBtn.textContent = 'Already in your book ✓';
-        addBtn.classList.add('exists');
+  if (addBtn) {
+    const wordLang = data.lang || currentLang || 'en';
+    if (cardAutoSaved) {
+      // Word was auto-saved on selection — show saved state immediately
+      markSaved(shadow, addBtn, data.word);
+    } else {
+      chrome.runtime.sendMessage({ type: 'CHECK_SAVED', word: data.word, lang: wordLang }, (r) => {
+        if (r?.saved) markSaved(shadow, addBtn, data.word);
+      });
+
+      addBtn.addEventListener('click', () => {
+        if (addBtn.classList.contains('exists') || addBtn.classList.contains('done')) return;
+        const wordData = data.error
+          ? { word: data.word, lang: wordLang }
+          : (currentContext ? { ...data, lang: wordLang, contextSentence: currentContext } : { ...data, lang: wordLang });
+        chrome.runtime.sendMessage({ type: 'SAVE_WORD', wordData }, (r) => {
+          if (r?.saved || r?.reason === 'already_exists') markSaved(shadow, addBtn, data.word);
+        });
+      });
+    }
+  }
+}
+
+function markSaved(shadow, addBtn, word) {
+  addBtn.textContent = 'Saved ✓';
+  addBtn.classList.remove('done');
+  addBtn.classList.add('exists');
+  if (shadow.getElementById('remove-link')) return;
+  const link = document.createElement('div');
+  link.id        = 'remove-link';
+  link.className = 'remove-link';
+  link.textContent = 'Remove from word book';
+  link.addEventListener('click', () => {
+    chrome.runtime.sendMessage({ type: 'REMOVE_WORD', word }, (r) => {
+      if (r?.removed) {
+        cardAutoSaved = false;
+        addBtn.textContent = '☕ SIP IT';
+        addBtn.classList.remove('exists', 'done');
+        link.remove();
       }
     });
-
-    addBtn.addEventListener('click', () => {
-      if (addBtn.classList.contains('exists') || addBtn.classList.contains('done')) return;
-      chrome.runtime.sendMessage({ type: 'SAVE_WORD', wordData: data }, (r) => {
-        if (r?.saved) {
-          addBtn.textContent = 'Added! ✓';
-          addBtn.classList.add('done');
-          setTimeout(hideCard, 900);
-        } else if (r?.reason === 'already_exists') {
-          addBtn.textContent = 'Already in your book ✓';
-          addBtn.classList.add('exists');
-        }
-      });
-    });
-  }
+  });
+  addBtn.insertAdjacentElement('afterend', link);
 }
 
 function updateCardState(data) {
@@ -299,6 +542,19 @@ function updateCardState(data) {
   if (!card) return;
   card.innerHTML = renderFull(data);
   bindCardButtons(shadow, data);
+}
+
+function insertNoExample(html) {
+  const shadow = cardHost?.shadowRoot;
+  if (!shadow) return;
+  if (shadow.querySelector('.example-wrap') || shadow.querySelector('.no-example')) return;
+  const anchor = shadow.querySelector('.synonyms') ?? shadow.querySelector('.add-btn');
+  if (!anchor) return;
+  const el = document.createElement('div');
+  el.className = 'no-example';
+  el.innerHTML = html;
+  el.querySelector('.hint-key')?.addEventListener('click', hideCard);
+  anchor.parentNode.insertBefore(el, anchor);
 }
 
 function updateCardAiExample(example) {
@@ -319,7 +575,7 @@ function updateCardAiExample(example) {
   }
 }
 
-function hideCard() { cardHost?.remove(); cardHost = null; }
+function hideCard() { cardHost?.remove(); cardHost = null; cardAutoSaved = false; }
 
 function esc(str) {
   return String(str ?? '')
@@ -330,8 +586,9 @@ function esc(str) {
 // ── MESSAGES FROM BACKGROUND ──────────────────────────────────
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg.type === 'CONTEXT_LOOKUP') {
+    const lang  = detectLang(msg.word);
     currentWord = msg.word;
-    hideTip();
-    lookupWord(msg.word);
+    currentLang = lang;
+    lookupWord(msg.word, null, { lang });
   }
 });

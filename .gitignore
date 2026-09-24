@@ -4,3 +4,4 @@ node_modules/
 *.log
 Sip_Production_Package/
 *.zip
+chrome-extension/dict.js

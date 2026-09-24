@@ -5,7 +5,8 @@
   "engines": { "node": ">=18" },
   "scripts": {
     "icons": "node generate-icons.js",
-    "screenshots": "node generate-screenshots.js"
+    "screenshots": "node generate-screenshots.js",
+    "dict": "node scripts/build-dict.js"
   },
   "devDependencies": {
     "puppeteer": "^25.1.0"

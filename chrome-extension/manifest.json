@@ -37,6 +37,10 @@
   "host_permissions": [
     "http://localhost/*",
     "http://127.0.0.1/*",
+    "https://api.dictionaryapi.dev/*",
+    "https://en.wiktionary.org/*"
+  ],
+  "optional_host_permissions": [
     "https://*/*"
   ],
   "content_security_policy": {

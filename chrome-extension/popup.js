@@ -1635,6 +1635,10 @@ function bindSettingsTab() {
     settings.apiKey   = document.getElementById('api-key-input').value.trim();
     settings.apiModel = document.getElementById('api-model-input').value.trim();
     await saveSettings();
+    // Request optional broad host permission so the AI endpoint can be reached
+    if (settings.apiUrl) {
+      try { await chrome.permissions.request({ origins: ['https://*/*'] }); } catch (_) {}
+    }
     showToast('AI settings saved ✓');
     if (settings.apiUrl) runAiTest(settings.apiUrl, settings.apiKey, settings.apiModel, true);
     else setAiStatus('idle');

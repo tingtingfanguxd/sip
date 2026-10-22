@@ -894,16 +894,21 @@ function showSessionCard() {
     ? `"${card.aiExample}"`
     : card.example ? `"${card.example}"` : '';
 
-  const synEl = document.getElementById('flip-synonyms');
-  synEl.innerHTML = (card.synonyms ?? []).slice(0,4)
-    .map(s => `<span class="syn-chip">${esc(s)}</span>`).join('');
+  const synEl  = document.getElementById('flip-synonyms');
+  const syns   = (card.synonyms ?? []).slice(0, 4);
+  synEl.innerHTML = syns.length
+    ? `<span class="chips-label">Also:</span>` + syns.map(s => `<span class="syn-chip">${esc(s)}</span>`).join('')
+    : '';
+  synEl.classList.toggle('hidden', syns.length === 0);
 
-  const antEl = document.getElementById('flip-antonyms');
+  const antEl   = document.getElementById('flip-antonyms');
   const antonyms = card.antonyms ?? [];
   antEl.innerHTML = antonyms.length
-    ? antonyms.map(a => `<span class="syn-chip antonym-chip">${esc(a)}</span>`).join('')
+    ? `<span class="chips-label">Opp:</span>` + antonyms.map(a => `<span class="syn-chip antonym-chip">${esc(a)}</span>`).join('')
     : '';
   antEl.classList.toggle('hidden', antonyms.length === 0);
+
+  renderTenses(document.getElementById('flip-tenses'), card);
 
   const ctxEl = document.getElementById('flip-context-sentence');
   if (card.contextSentence) {
@@ -929,8 +934,8 @@ function showSessionCard() {
 
   updateProgress();
 
-  // Fetch and cache AI example if missing
-  if (!card.aiExample) {
+  // Fetch AI example only if user has AI configured
+  if (!card.aiExample && settings.apiUrl) {
     fetchAndCacheAiExample(card).then(example => {
       if (!example) return;
       if (sessionQueue[sessionIdx]?.id !== card.id) return;
@@ -1278,15 +1283,23 @@ function openWordDetail(word) {
     aiLoadEl.classList.add('hidden');
   }
 
-  $('detail-synonyms').innerHTML = (word.synonyms ?? []).slice(0, 5)
-    .map(s => `<span class="syn-chip">${esc(s)}</span>`).join('');
+  const detailSynEl = $('detail-synonyms');
+  const detailSyns  = (word.synonyms ?? []).slice(0, 5);
+  detailSynEl.innerHTML = detailSyns.length
+    ? `<span class="chips-label">Also:</span>` + detailSyns.map(s => `<span class="syn-chip">${esc(s)}</span>`).join('')
+    : '';
+  detailSynEl.classList.toggle('hidden', detailSyns.length === 0);
 
   const antonyms = word.antonyms ?? [];
   const antEl2 = $('detail-antonyms');
   if (antEl2) {
-    antEl2.innerHTML = antonyms.map(a => `<span class="syn-chip antonym-chip">${esc(a)}</span>`).join('');
+    antEl2.innerHTML = antonyms.length
+      ? `<span class="chips-label">Opp:</span>` + antonyms.map(a => `<span class="syn-chip antonym-chip">${esc(a)}</span>`).join('')
+      : '';
     antEl2.classList.toggle('hidden', antonyms.length === 0);
   }
+
+  renderTenses($('detail-tenses'), word);
 
   const ctxEl2 = $('detail-context-sentence');
   if (ctxEl2) {
@@ -1315,7 +1328,7 @@ function openWordDetail(word) {
   $('detail-review-btn').classList.toggle('hidden', !overdue);
   $('word-detail-overlay').classList.remove('hidden');
 
-  if (!word.aiExample) {
+  if (!word.aiExample && settings.apiUrl) {
     aiLoadEl.classList.remove('hidden');
     fetchAndCacheAiExample(word).then(example => {
       if (!example) { aiLoadEl.classList.add('hidden'); return; }
@@ -1324,6 +1337,8 @@ function openWordDetail(word) {
       exEl.classList.remove('hidden');
       aiLoadEl.classList.add('hidden');
     });
+  } else {
+    aiLoadEl.classList.add('hidden');
   }
 
   // AI features: memory hook + word roots (only when AI is configured)
@@ -1708,6 +1723,141 @@ function bindSettingsTab() {
     showToast('Word book cleared');
   });
 
+  // ── ADD WORD MODAL ─────────────────────────────────────────
+  let awmLookupResult = null;
+
+  function openAddWordModal() {
+    awmLookupResult = null;
+    document.getElementById('awm-word-input').value = '';
+    document.getElementById('awm-status').className  = 'awm-status hidden';
+    document.getElementById('awm-status').textContent = '';
+    document.getElementById('awm-result').classList.add('hidden');
+    document.getElementById('awm-manual').classList.add('hidden');
+    document.getElementById('awm-save-btn').classList.add('hidden');
+    document.getElementById('awm-manual-def').value = '';
+    document.getElementById('add-word-overlay').classList.remove('hidden');
+    setTimeout(() => document.getElementById('awm-word-input').focus(), 50);
+  }
+
+  function closeAddWordModal() {
+    document.getElementById('add-word-overlay').classList.add('hidden');
+  }
+
+  async function runAddWordLookup() {
+    const raw = document.getElementById('awm-word-input').value.trim();
+    if (!raw) return;
+
+    const lookupBtn = document.getElementById('awm-lookup-btn');
+    const statusEl  = document.getElementById('awm-status');
+    const resultEl  = document.getElementById('awm-result');
+    const manualEl  = document.getElementById('awm-manual');
+    const saveBtn   = document.getElementById('awm-save-btn');
+
+    lookupBtn.disabled = true;
+    resultEl.classList.add('hidden');
+    manualEl.classList.add('hidden');
+    saveBtn.classList.add('hidden');
+    awmLookupResult = null;
+
+    statusEl.className   = 'awm-status';
+    statusEl.textContent = 'Looking up…';
+
+    try {
+      const r = await chrome.runtime.sendMessage({ type: 'LOOKUP', word: raw, lang: 'en' });
+
+      if (r && r.definition) {
+        awmLookupResult = r;
+        document.getElementById('awm-found-word').textContent = r.word || raw;
+        document.getElementById('awm-found-phon').textContent = r.phonetic || '';
+        document.getElementById('awm-found-pos').textContent  = r.pos || '';
+        document.getElementById('awm-found-def').textContent  = r.definition;
+        resultEl.classList.remove('hidden');
+        statusEl.className   = 'awm-status hidden';
+        statusEl.textContent = '';
+        saveBtn.classList.remove('hidden');
+      } else {
+        // Not found — show manual input
+        statusEl.className   = 'awm-status awm-status--err';
+        statusEl.textContent = `No definition found for "${raw}"`;
+        manualEl.classList.remove('hidden');
+        saveBtn.classList.remove('hidden');
+        awmLookupResult = { word: raw, definition: '', pos: '', phonetic: '', lang: 'en' };
+        setTimeout(() => document.getElementById('awm-manual-def').focus(), 50);
+      }
+    } catch (_) {
+      statusEl.className   = 'awm-status awm-status--err';
+      statusEl.textContent = 'Lookup failed. Add definition manually:';
+      manualEl.classList.remove('hidden');
+      saveBtn.classList.remove('hidden');
+      awmLookupResult = { word: raw, definition: '', pos: '', phonetic: '', lang: 'en' };
+    } finally {
+      lookupBtn.disabled = false;
+    }
+  }
+
+  async function saveAddedWord() {
+    if (!awmLookupResult) return;
+
+    const manualDef = document.getElementById('awm-manual').classList.contains('hidden')
+      ? ''
+      : document.getElementById('awm-manual-def').value.trim();
+
+    const wordData = {
+      ...awmLookupResult,
+      definition: manualDef || awmLookupResult.definition,
+    };
+
+    const statusEl = document.getElementById('awm-status');
+    const saveBtn  = document.getElementById('awm-save-btn');
+
+    function showSaveError(msg) {
+      statusEl.className   = 'awm-status awm-status--err';
+      statusEl.textContent = msg;
+      saveBtn.disabled = false;
+    }
+
+    if (!wordData.word || !wordData.definition) {
+      showSaveError('Please enter a definition.');
+      return;
+    }
+
+    saveBtn.disabled = true;
+
+    let r;
+    try {
+      r = await chrome.runtime.sendMessage({ type: 'SAVE_WORD', wordData });
+    } catch (err) {
+      showSaveError('Could not save — please try again.');
+      return;
+    }
+
+    if (r?.saved === false && r?.reason === 'already_exists') {
+      showSaveError(`"${wordData.word}" is already in your word book.`);
+      return;
+    }
+
+    await loadAll();
+    renderWordBook();
+    showReviewState();
+    closeAddWordModal();
+    showToast(`"${wordData.word}" added ☕`);
+  }
+
+  document.getElementById('add-word-btn').addEventListener('click', openAddWordModal);
+  document.getElementById('awm-close').addEventListener('click', closeAddWordModal);
+  document.getElementById('awm-cancel-btn').addEventListener('click', closeAddWordModal);
+
+  document.getElementById('add-word-overlay').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('add-word-overlay')) closeAddWordModal();
+  });
+
+  document.getElementById('awm-lookup-btn').addEventListener('click', runAddWordLookup);
+  document.getElementById('awm-word-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') runAddWordLookup();
+  });
+
+  document.getElementById('awm-save-btn').addEventListener('click', saveAddedWord);
+
 }
 
 function startMusic() {
@@ -1774,6 +1924,104 @@ function esc(str) {
   return String(str ?? '')
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+// ── VERB CONJUGATION ──────────────────────────────────────────────────────────
+function getVerbForms(baseWord) {
+  const w = baseWord.toLowerCase().trim();
+  // [past, pastParticiple, gerundOverride, s3Override]
+  const IRR = {
+    be:['was/were','been','being','is'], have:['had','had',null,'has'],
+    do:['did','done'], go:['went','gone'], make:['made','made'],
+    take:['took','taken'], come:['came','come'], see:['saw','seen'],
+    know:['knew','known'], think:['thought','thought'], give:['gave','given'],
+    find:['found','found'], tell:['told','told'], become:['became','become'],
+    leave:['left','left'], feel:['felt','felt'], put:['put','put','putting'],
+    bring:['brought','brought'], begin:['began','begun','beginning'],
+    keep:['kept','kept'], hold:['held','held'], write:['wrote','written'],
+    stand:['stood','stood'], hear:['heard','heard'], let:['let','let','letting'],
+    mean:['meant','meant'], set:['set','set','setting'], meet:['met','met'],
+    run:['ran','run','running'], pay:['paid','paid'], sit:['sat','sat','sitting'],
+    speak:['spoke','spoken'], lie:['lay','lain','lying'],
+    lead:['led','led'], read:['read','read'], grow:['grew','grown'],
+    lose:['lost','lost'], fall:['fell','fallen'], send:['sent','sent'],
+    build:['built','built'], understand:['understood','understood'],
+    draw:['drew','drawn'], break:['broke','broken'], spend:['spent','spent'],
+    cut:['cut','cut','cutting'], rise:['rose','risen'], drive:['drove','driven'],
+    buy:['bought','bought'], wear:['wore','worn'], choose:['chose','chosen'],
+    catch:['caught','caught'], fight:['fought','fought'], throw:['threw','thrown'],
+    win:['won','won','winning'], forget:['forgot','forgotten','forgetting'],
+    eat:['ate','eaten'], get:['got','gotten','getting'], say:['said','said'],
+    sell:['sold','sold'], teach:['taught','taught'], sing:['sang','sung'],
+    swim:['swam','swum','swimming'], fly:['flew','flown'], drink:['drank','drunk'],
+    sleep:['slept','slept'], wake:['woke','woken'], hurt:['hurt','hurt'],
+    hit:['hit','hit','hitting'], bite:['bit','bitten'], hide:['hid','hidden'],
+    ride:['rode','ridden'], steal:['stole','stolen'], shake:['shook','shaken'],
+    shoot:['shot','shot'], blow:['blew','blown'], freeze:['froze','frozen'],
+    dig:['dug','dug','digging'], flee:['fled','fled'], hang:['hung','hung'],
+    lay:['laid','laid'], lend:['lent','lent'], light:['lit','lit'],
+    ring:['rang','rung'], seek:['sought','sought'], sink:['sank','sunk'],
+    slide:['slid','slid'], spin:['spun','spun','spinning'], split:['split','split'],
+    spread:['spread','spread'], spring:['sprang','sprung'], stick:['stuck','stuck'],
+    sting:['stung','stung'], strike:['struck','struck'], swear:['swore','sworn'],
+    sweep:['swept','swept'], swing:['swung','swung'], tear:['tore','torn'],
+    weep:['wept','wept'], bind:['bound','bound'], bend:['bent','bent'],
+    deal:['dealt','dealt'], grind:['ground','ground'], arise:['arose','arisen'],
+    bear:['bore','borne'], cast:['cast','cast'], burst:['burst','burst'],
+    overcome:['overcame','overcome'], speed:['sped','sped'], shrink:['shrank','shrunk'],
+    wind:['wound','wound'], bid:['bid','bid','bidding'], fit:['fit','fit','fitting'],
+    quit:['quit','quit','quitting'], shed:['shed','shed'], shut:['shut','shut','shutting'],
+    spit:['spat','spat','spitting'], thrust:['thrust','thrust'], upset:['upset','upset'],
+    show:['showed','shown'],
+  };
+  const irr = IRR[w];
+
+  function makeS3(v) {
+    if (irr?.[3]) return irr[3];
+    if (/(?:ch|sh|x|z|s)$/.test(v)) return v + 'es';
+    if (/[^aeiou]y$/.test(v)) return v.slice(0,-1) + 'ies';
+    if (/[^aeiou]o$/.test(v)) return v + 'es';
+    return v + 's';
+  }
+  function makeGerund(v) {
+    if (irr?.[2]) return irr[2];
+    if (/ie$/.test(v)) return v.slice(0,-2) + 'ying';
+    if (/[^aeiou]e$/.test(v)) return v.slice(0,-1) + 'ing';
+    const vowelGroups = (v.match(/[aeiou]+/g) || []).length;
+    if (vowelGroups === 1 && /[^aeiou][aeiou][^aeiouwxy]$/.test(v)) return v + v.slice(-1) + 'ing';
+    return v + 'ing';
+  }
+  function makePast(v) {
+    if (irr?.[0]) return irr[0];
+    if (/[^aeiou]y$/.test(v)) return v.slice(0,-1) + 'ied';
+    if (/e$/.test(v)) return v + 'd';
+    const vowelGroups = (v.match(/[aeiou]+/g) || []).length;
+    if (vowelGroups === 1 && /[^aeiou][aeiou][^aeiouwxy]$/.test(v)) return v + v.slice(-1) + 'ed';
+    return v + 'ed';
+  }
+
+  const past = makePast(w);
+  const pp   = irr?.[1] ?? past;
+  return { base: w, s3: makeS3(w), past, pp, gerund: makeGerund(w) };
+}
+
+function renderTenses(container, word) {
+  const isVerb = (word.pos ?? '').toLowerCase().includes('verb');
+  if (!isVerb) { container.classList.add('hidden'); return; }
+  const f = getVerbForms(word.word);
+  const ppCell = f.past !== f.pp
+    ? `<div class="tense-cell"><div class="tense-form">${esc(f.pp)}</div><div class="tense-lbl">p.part</div></div>`
+    : '';
+  container.innerHTML = `
+    <div class="tense-label">Conjugation</div>
+    <div class="tense-row">
+      <div class="tense-cell"><div class="tense-form">${esc(f.base)}</div><div class="tense-lbl">base</div></div>
+      <div class="tense-cell"><div class="tense-form">${esc(f.s3)}</div><div class="tense-lbl">3rd sg</div></div>
+      <div class="tense-cell"><div class="tense-form">${esc(f.past)}</div><div class="tense-lbl">past</div></div>
+      ${ppCell}
+      <div class="tense-cell"><div class="tense-form">${esc(f.gerund)}</div><div class="tense-lbl">-ing</div></div>
+    </div>`;
+  container.classList.remove('hidden');
 }
 
 function confettiPop(container) {

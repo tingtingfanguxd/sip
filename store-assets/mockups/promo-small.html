@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Space+Grotesk:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{width:440px;height:280px;overflow:hidden;background:#FFE033;font-family:'Plus Jakarta Sans',sans-serif;display:flex;align-items:stretch;border:2px solid #111}
+    .left{width:210px;flex-shrink:0;padding:28px 24px;display:flex;flex-direction:column;justify-content:center;background:#FFE033;border-right:2px solid #111}
+    .logo{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+    .ln{font-size:28px;font-weight:800;background:#111;color:#FFE033;padding:2px 12px;letter-spacing:-.5px}
+    .tagline{font-size:15px;font-weight:800;color:#111;line-height:1.25;letter-spacing:-.2px;margin-bottom:16px}
+    .tagline em{font-style:normal;text-decoration:underline;text-decoration-thickness:2px}
+    .free-badge{background:#111;color:#FFE033;padding:5px 12px;font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;display:inline-block}
+    .right{flex:1;background:#F2F2EE;display:flex;align-items:center;justify-content:center;padding:16px}
+    /* Mini popup */
+    .popup{width:168px;background:#F2F2EE;border:2px solid #111;box-shadow:4px 4px 0 #111;overflow:hidden;font-family:'Plus Jakarta Sans',sans-serif}
+    .ph{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#fff;border-bottom:2px solid #111}
+    .bn{font-size:12px;font-weight:800;background:#FFE033;padding:1px 7px;border:1.5px solid #111;color:#111;letter-spacing:-.3px}
+    .sk{background:#FFE033;border:1.5px solid #111;padding:2px 7px;font-size:9px;font-weight:800;color:#111}
+    .pc{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 10px 10px;gap:8px;background:#F2F2EE;min-height:170px}
+    .rw{position:relative;width:80px;height:80px}
+    .rc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+    .rn{font-size:22px;font-weight:800;color:#111;line-height:1}
+    .rl{font-size:8px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-top:1px}
+    .sbtn{padding:7px 12px;background:#FFE033;border:2px solid #111;color:#111;font-family:'Plus Jakarta Sans',sans-serif;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;box-shadow:2px 2px 0 #111}
+    .pn{display:flex;border-top:2px solid #111;background:#fff}
+    .ni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:5px 2px;border-right:1px solid #DDDDD8}
+    .ni:last-child{border-right:none}
+    .ni.on{background:#FFE033}
+    .nic{font-size:11px;line-height:1}
+    .nil{font-size:7px;font-weight:800;letter-spacing:.2px;text-transform:uppercase;color:#C0C0BC}
+    .ni.on .nil{color:#111}
+  </style>
+</head>
+<body>
+  <div class="left">
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
+        <path d="M4 14 C4 14 4 8 10 8 C16 8 16 14 16 14" stroke="#111" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M7 8 C7 8 7 5 10 5 C13 5 13 8 13 8" stroke="rgba(0,0,0,.4)" stroke-width="1.2" stroke-linecap="round"/>
+        <rect x="3" y="14" width="14" height="2.5" fill="#111" opacity=".8"/>
+        <path d="M16 10 C18 10 18 13 16 13" stroke="rgba(0,0,0,.5)" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+      <span class="ln">Sip</span>
+    </div>
+    <div class="tagline">A Word a Day.<br><em>Vocab that sticks.</em></div>
+    <div class="free-badge">Free Extension</div>
+  </div>
+  <div class="right">
+    <div class="popup">
+      <div class="ph">
+        <span class="bn">Sip</span>
+        <div class="sk">🔥 7</div>
+      </div>
+      <div class="pc">
+        <div class="rw">
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="30" fill="none" stroke="#DDDDD8" stroke-width="8"/>
+            <circle cx="40" cy="40" r="30" fill="none" stroke="#FF2D6B" stroke-width="8" stroke-dasharray="94 95" transform="rotate(-90 40 40)"/>
+            <circle cx="40" cy="40" r="30" fill="none" stroke="#FF6B1A" stroke-width="8" stroke-dasharray="35 153" transform="rotate(90 40 40)"/>
+            <circle cx="40" cy="40" r="30" fill="none" stroke="#00DC82" stroke-width="8" stroke-dasharray="59 130" transform="rotate(158 40 40)"/>
+          </svg>
+          <div class="rc">
+            <div class="rn">8</div>
+            <div class="rl">due</div>
+          </div>
+        </div>
+        <!-- Mini cat -->
+        <svg width="50" height="47" viewBox="0 0 120 110">
+          <ellipse cx="38" cy="97" rx="13" ry="7" fill="#292524"/>
+          <ellipse cx="82" cy="97" rx="13" ry="7" fill="#292524"/>
+          <circle cx="60" cy="56" r="30" fill="#1C1917"/>
+          <ellipse cx="60" cy="71" rx="15" ry="9" fill="#292524"/>
+          <polygon points="36,40 22,12 52,30" fill="#1C1917"/>
+          <polygon points="37,40 27,18 49,31" fill="#FDA4AF" opacity=".65"/>
+          <polygon points="84,40 98,12 68,30" fill="#1C1917"/>
+          <polygon points="83,40 93,18 71,31" fill="#FDA4AF" opacity=".65"/>
+          <circle cx="46" cy="50" r="9" fill="#FFE033"/>
+          <rect x="44" y="43.5" width="4" height="13" rx="2" fill="#1C1917"/>
+          <circle cx="74" cy="50" r="9" fill="#FFE033"/>
+          <rect x="72" y="43.5" width="4" height="13" rx="2" fill="#1C1917"/>
+          <ellipse cx="60" cy="61" rx="3.5" ry="2.5" fill="#FDA4AF"/>
+          <path d="M56,64 Q60,68 64,64" stroke="#FDA4AF" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        </svg>
+        <button class="sbtn">Start Brewing →</button>
+      </div>
+      <div class="pn">
+        <div class="ni on"><span class="nic">☕</span><span class="nil">Review</span></div>
+        <div class="ni"><span class="nic">📖</span><span class="nil">Words</span></div>
+        <div class="ni"><span class="nic">⚙️</span><span class="nil">Settings</span></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

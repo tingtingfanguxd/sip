@@ -158,8 +158,9 @@
                 <span class="flip-pos-back" id="flip-pos-back"></span>
                 <div class="flip-definition" id="flip-definition"></div>
                 <div class="flip-example" id="flip-example"></div>
-                <div class="flip-synonyms" id="flip-synonyms"></div>
-                <div class="flip-antonyms" id="flip-antonyms"></div>
+                <div class="flip-synonyms hidden" id="flip-synonyms"></div>
+                <div class="flip-antonyms hidden" id="flip-antonyms"></div>
+                <div class="flip-tenses hidden" id="flip-tenses"></div>
                 <div class="flip-context-sentence hidden" id="flip-context-sentence"></div>
               </div>
             </div>
@@ -264,6 +265,7 @@
         <option value="due">Due first</option>
         <option value="az">A → Z</option>
       </select>
+      <button class="add-word-btn" id="add-word-btn" title="Add a word manually">+ Add</button>
     </div>
     <div id="filter-chips-row" class="filter-chips-row"></div>
     <div class="words-stats-row" id="words-stats-row"></div>
@@ -341,6 +343,45 @@
     </div>
   </section>
 
+  <!-- ── ADD WORD MODAL ──────────────────────────────────── -->
+  <div id="add-word-overlay" class="add-word-overlay hidden">
+    <div class="add-word-modal">
+      <div class="awm-header">
+        <span class="awm-title">Add a Word</span>
+        <button class="awm-close" id="awm-close">✕</button>
+      </div>
+      <div class="awm-body">
+        <div class="awm-input-row">
+          <input class="awm-input" id="awm-word-input" type="text" placeholder="Type a word…" autocomplete="off" autocorrect="off" spellcheck="false">
+          <button class="awm-lookup-btn" id="awm-lookup-btn">Look up</button>
+        </div>
+        <div id="awm-status" class="awm-status hidden"></div>
+        <div id="awm-result" class="awm-result hidden">
+          <div class="awm-found" id="awm-found">
+            <div class="awm-found-head">
+              <div class="awm-found-word-row">
+                <span class="awm-found-word" id="awm-found-word"></span>
+                <span class="awm-found-phon" id="awm-found-phon"></span>
+              </div>
+            </div>
+            <div class="awm-found-body">
+              <span class="awm-found-pos" id="awm-found-pos"></span>
+              <div class="awm-found-def" id="awm-found-def"></div>
+            </div>
+          </div>
+        </div>
+        <div id="awm-manual" class="awm-manual hidden">
+          <p class="awm-manual-label">No definition found — add it yourself:</p>
+          <textarea class="awm-manual-def" id="awm-manual-def" placeholder="Enter definition…" rows="3"></textarea>
+        </div>
+      </div>
+      <div class="awm-footer">
+        <button class="awm-cancel-btn" id="awm-cancel-btn">Cancel</button>
+        <button class="awm-save-btn hidden" id="awm-save-btn">Save ☕</button>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 <!-- ── BOTTOM TABS ─────────────────────────────────────────── -->
@@ -379,8 +420,9 @@
       <div class="detail-definition" id="detail-definition"></div>
       <div class="detail-example hidden" id="detail-example"></div>
       <div class="detail-ai-loading hidden" id="detail-ai-loading">✨ Generating AI example…</div>
-      <div class="detail-synonyms" id="detail-synonyms"></div>
+      <div class="detail-synonyms hidden" id="detail-synonyms"></div>
       <div class="detail-antonyms hidden" id="detail-antonyms"></div>
+      <div class="detail-tenses hidden" id="detail-tenses"></div>
       <div class="detail-context-sentence hidden" id="detail-context-sentence"></div>
       <div class="detail-ai-feature hidden" id="detail-memory-hook">
         <div class="detail-ai-label">💡 Memory Hook</div>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sip — Privacy Policy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:#F2F2EE;color:#111;min-height:100vh}
+    .header{background:#FFE033;border-bottom:2px solid #111;padding:16px 0}
+    .header-inner{max-width:720px;margin:0 auto;padding:0 24px;display:flex;align-items:center;gap:12px}
+    .logo{display:flex;align-items:center;gap:8px}
+    .lname{font-size:22px;font-weight:800;background:#111;color:#FFE033;padding:2px 12px;border:2px solid #111;letter-spacing:-.4px}
+    .ltag{font-size:13px;font-weight:700;color:#111;opacity:.6}
+    main{max-width:720px;margin:0 auto;padding:48px 24px 80px}
+    h1{font-size:32px;font-weight:800;letter-spacing:-.5px;margin-bottom:8px}
+    .updated{font-size:13px;color:#888;font-weight:600;margin-bottom:40px}
+    h2{font-size:14px;font-weight:800;letter-spacing:1px;text-transform:uppercase;background:#FFE033;border:2px solid #111;padding:4px 12px;box-shadow:2px 2px 0 #111;display:inline-block;margin:32px 0 16px}
+    p{font-size:15px;color:#444;line-height:1.8;font-weight:500;margin-bottom:12px}
+    ul{padding-left:24px;margin-bottom:12px}
+    li{font-size:15px;color:#444;line-height:1.8;font-weight:500;margin-bottom:4px}
+    strong{color:#111;font-weight:800}
+    .highlight{background:#FFE033;padding:0 4px;font-weight:700;color:#111}
+    .contact{background:#fff;border:2px solid #111;padding:20px 24px;box-shadow:4px 4px 0 #111;margin-top:40px}
+    .contact p{margin:0}
+    a{color:#0099FF;font-weight:700;text-decoration:underline}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
+          <path d="M4 14 C4 14 4 8 10 8 C16 8 16 14 16 14" stroke="#111" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M7 8 C7 8 7 5 10 5 C13 5 13 8 13 8" stroke="rgba(0,0,0,.4)" stroke-width="1.2" stroke-linecap="round"/>
+          <rect x="3" y="14" width="14" height="2.5" fill="#111" opacity=".8"/>
+          <path d="M16 10 C18 10 18 13 16 13" stroke="rgba(0,0,0,.5)" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+        <span class="lname">Sip</span>
+      </div>
+      <span class="ltag">Privacy Policy</span>
+    </div>
+  </div>
+  <main>
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated: October 2026</p>
+
+    <p>Sip ("the extension") is a Chrome extension for vocabulary learning. This policy explains what data is collected, where it is stored, and how it is used.</p>
+
+    <h2>Data We Collect</h2>
+    <p>Sip stores the following data <strong>locally in your browser</strong> using <code>chrome.storage.sync</code>:</p>
+    <ul>
+      <li>Words you have saved (the word, its definition, phonetics, part of speech, example sentences)</li>
+      <li>Spaced repetition metadata (review intervals, ease factors, next review dates)</li>
+      <li>Your streak count and review history</li>
+      <li>App settings (AI provider URL, API key, reminder time, music volume)</li>
+    </ul>
+    <p>This data is <span class="highlight">synced across your Chrome profiles</span> via Chrome Sync if you have it enabled, and is never sent to our servers.</p>
+
+    <h2>Data We Do NOT Collect</h2>
+    <ul>
+      <li>We do not collect analytics, usage statistics, or telemetry</li>
+      <li>We do not collect your browsing history</li>
+      <li>We do not have servers that receive your word data or API keys</li>
+      <li>We do not sell or share any data with third parties</li>
+    </ul>
+
+    <h2>Third-Party Services</h2>
+    <p>Sip may connect to the following third-party services <strong>at your explicit request</strong>:</p>
+    <ul>
+      <li><strong>Dictionary API (dictionaryapi.dev)</strong> — used to fetch word definitions when you save a word. The word you looked up is sent to this public API. No personal information is included.</li>
+      <li><strong>Wiktionary (en.wiktionary.org)</strong> — used as a fallback for definitions. Same conditions as above.</li>
+      <li><strong>AI Provider of your choice</strong> — if you configure an AI API (e.g., DeepSeek, OpenRouter, or a local model), your word data is sent to that provider to generate examples and brew stories. Your API key is stored locally in your browser and sent only to the provider you configured. We have no access to it.</li>
+    </ul>
+
+    <h2>Permissions Used</h2>
+    <ul>
+      <li><strong>storage</strong> — to save your words and settings locally in Chrome</li>
+      <li><strong>contextMenus</strong> — to add "Sip this word" to the right-click menu</li>
+      <li><strong>notifications</strong> — to send daily review reminders (only if you enable them)</li>
+      <li><strong>alarms</strong> — to schedule daily reminders</li>
+      <li><strong>offscreen</strong> — to play ambient audio in the background</li>
+      <li><strong>host permissions (https://*)</strong> — required so the extension can reach your configured AI API endpoint, which can be any HTTPS URL you choose</li>
+    </ul>
+
+    <h2>Children's Privacy</h2>
+    <p>Sip is not directed at children under 13. We do not knowingly collect personal information from children.</p>
+
+    <h2>Changes to This Policy</h2>
+    <p>We may update this policy as the extension evolves. Material changes will be noted in the extension's update notes.</p>
+
+    <div class="contact">
+      <h2 style="margin-top:0">Contact</h2>
+      <p>Questions about this policy? Reach us at <a href="mailto:tingtingfang.ux@gmail.com">tingtingfang.ux@gmail.com</a></p>
+    </div>
+  </main>
+</body>
+</html>

@@ -13,11 +13,16 @@ const OUT   = path.join(__dirname, 'chrome-extension/icons');
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   });
 
+  const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`;
+
   for (const size of SIZES) {
     const page = await browser.newPage();
     await page.setViewport({ width: size, height: size, deviceScaleFactor: 1 });
-    await page.setContent(`<!DOCTYPE html><html><head><style>*{margin:0;padding:0}body{width:${size}px;height:${size}px;overflow:hidden}</style></head><body>${svgContent}</body></html>`);
-    await new Promise(r => setTimeout(r, 300));
+    await page.setContent(
+      `<!DOCTYPE html><html><head><style>*{margin:0;padding:0}body,html{width:${size}px;height:${size}px;overflow:hidden}</style></head>` +
+      `<body><img src="${svgDataUrl}" width="${size}" height="${size}" style="display:block"></body></html>`,
+      { waitUntil: 'networkidle0' }
+    );
     const outPath = path.join(OUT, `icon${size}.png`);
     await page.screenshot({ path: outPath, type: 'png', clip: { x:0, y:0, width:size, height:size } });
     console.log(`✓  icon${size}.png`);

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Space+Grotesk:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{width:1280px;height:800px;overflow:hidden;background:#0d0c18;font-family:'Plus Jakarta Sans',sans-serif;display:flex;align-items:center;color:#fff}
+    .left{width:500px;flex-shrink:0;padding:0 44px 0 72px;display:flex;flex-direction:column;justify-content:center}
+    .badge{display:inline-flex;align-items:center;background:#FFE033;padding:5px 14px;font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#111;border:2px solid #111;box-shadow:2px 2px 0 #111;margin-bottom:24px;width:fit-content}
+    h1{font-size:44px;font-weight:800;line-height:1.05;letter-spacing:-.8px;color:#fff;margin-bottom:16px}
+    h1 em{font-style:normal;background:#FFE033;color:#111;padding:2px 8px}
+    .sub{font-size:16px;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:36px;font-weight:500}
+    .feats{display:flex;flex-direction:column;gap:13px}
+    .feat{display:flex;align-items:center;gap:13px;font-size:15px;color:rgba(255,255,255,.8);font-weight:600}
+    .fdot{width:26px;height:26px;flex-shrink:0;background:#FFE033;border:2px solid #111;display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:2px 2px 0 #111}
+    .right{flex:1;display:flex;align-items:center;justify-content:center}
+    /* Popup */
+    .popup{width:380px;background:#F2F2EE;border:2px solid #111;box-shadow:8px 8px 0 #111;overflow:hidden;font-family:'Plus Jakarta Sans',sans-serif}
+    .ph{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;background:#fff;border-bottom:2px solid #111}
+    .bn{font-size:18px;font-weight:800;background:#FFE033;padding:2px 10px;border:2px solid #111;color:#111;letter-spacing:-.4px}
+    .sk{background:#FFE033;border:2px solid #111;padding:4px 10px;font-size:12px;font-weight:800;color:#111;box-shadow:2px 2px 0 #111}
+    .mb{background:#fff;border:2px solid #111;padding:6px 10px;font-size:14px;color:#888;box-shadow:2px 2px 0 #111}
+    .pc{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px 20px;gap:14px;height:422px;background:#F2F2EE}
+    .rw{position:relative;width:160px;height:160px}
+    .rc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+    .rn{font-size:38px;font-weight:800;color:#111;line-height:1}
+    .rl{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+    .sbtn{padding:12px 32px;background:#FFE033;border:2px solid #111;color:#111;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;box-shadow:4px 4px 0 #111;cursor:pointer}
+    .pn{display:flex;border-top:2px solid #111;background:#fff}
+    .ni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px 4px;border-right:1px solid #DDDDD8}
+    .ni:last-child{border-right:none}
+    .ni.on{background:#FFE033}
+    .nic{font-size:17px;line-height:1}
+    .nil{font-size:10px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:#C0C0BC}
+    .ni.on .nil{color:#111}
+  </style>
+</head>
+<body>
+  <div class="left">
+    <div class="badge">☕ Free Chrome Extension</div>
+    <h1>Build your vocab,<br>one <em>sip</em> at a time</h1>
+    <p class="sub">A daily habit powered by spaced repetition. Save words as you browse — review in minutes.</p>
+    <div class="feats">
+      <div class="feat"><div class="fdot">✦</div>Save any word from any webpage</div>
+      <div class="feat"><div class="fdot">🔄</div>Spaced repetition — the science of remembering</div>
+      <div class="feat"><div class="fdot">🔥</div>Daily streak tracking to build the habit</div>
+      <div class="feat"><div class="fdot">🤖</div>Optional AI examples &amp; brew stories</div>
+    </div>
+  </div>
+  <div class="right">
+    <div class="popup">
+      <div class="ph">
+        <div style="display:flex;align-items:center;gap:8px">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M4 14 C4 14 4 8 10 8 C16 8 16 14 16 14" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M7 8 C7 8 7 5 10 5 C13 5 13 8 13 8" stroke="rgba(245,158,11,.4)" stroke-width="1.2" stroke-linecap="round"/>
+            <rect x="3" y="14" width="14" height="2.5" fill="#f59e0b" opacity=".8"/>
+            <path d="M16 10 C18 10 18 13 16 13" stroke="rgba(245,158,11,.5)" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          <span class="bn">Sip</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="mb">♫</span>
+          <div class="sk">🔥 7</div>
+        </div>
+      </div>
+      <div class="pc">
+        <div class="rw">
+          <svg width="160" height="160" viewBox="0 0 160 160">
+            <circle cx="80" cy="80" r="60" fill="none" stroke="#DDDDD8" stroke-width="14"/>
+            <circle cx="80" cy="80" r="60" fill="none" stroke="#FF2D6B" stroke-width="14" stroke-dasharray="188 189" transform="rotate(-90 80 80)"/>
+            <circle cx="80" cy="80" r="60" fill="none" stroke="#FF6B1A" stroke-width="14" stroke-dasharray="71 306" transform="rotate(90 80 80)"/>
+            <circle cx="80" cy="80" r="60" fill="none" stroke="#00DC82" stroke-width="14" stroke-dasharray="118 259" transform="rotate(158 80 80)"/>
+          </svg>
+          <div class="rc">
+            <div class="rn">8</div>
+            <div class="rl">words due</div>
+          </div>
+        </div>
+        <!-- Cat idle -->
+        <svg width="88" height="82" viewBox="0 0 120 110">
+          <ellipse cx="38" cy="97" rx="13" ry="7" fill="#292524"/>
+          <ellipse cx="82" cy="97" rx="13" ry="7" fill="#292524"/>
+          <circle cx="60" cy="56" r="30" fill="#1C1917"/>
+          <ellipse cx="60" cy="71" rx="15" ry="9" fill="#292524"/>
+          <polygon points="36,40 22,12 52,30" fill="#1C1917"/>
+          <polygon points="37,40 27,18 49,31" fill="#FDA4AF" opacity=".65"/>
+          <polygon points="84,40 98,12 68,30" fill="#1C1917"/>
+          <polygon points="83,40 93,18 71,31" fill="#FDA4AF" opacity=".65"/>
+          <circle cx="46" cy="50" r="9" fill="#FFE033"/>
+          <rect x="44" y="43.5" width="4" height="13" rx="2" fill="#1C1917"/>
+          <circle cx="43" cy="47" r="2.5" fill="white" opacity=".9"/>
+          <circle cx="74" cy="50" r="9" fill="#FFE033"/>
+          <rect x="72" y="43.5" width="4" height="13" rx="2" fill="#1C1917"/>
+          <circle cx="71" cy="47" r="2.5" fill="white" opacity=".9"/>
+          <ellipse cx="60" cy="61" rx="3.5" ry="2.5" fill="#FDA4AF"/>
+          <path d="M56,64 Q60,68 64,64" stroke="#FDA4AF" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <line x1="22" y1="60" x2="53" y2="62" stroke="rgba(255,255,255,.5)" stroke-width="1.1" stroke-linecap="round"/>
+          <line x1="22" y1="65" x2="53" y2="64" stroke="rgba(255,255,255,.5)" stroke-width="1.1" stroke-linecap="round"/>
+          <line x1="98" y1="60" x2="67" y2="62" stroke="rgba(255,255,255,.5)" stroke-width="1.1" stroke-linecap="round"/>
+          <line x1="98" y1="65" x2="67" y2="64" stroke="rgba(255,255,255,.5)" stroke-width="1.1" stroke-linecap="round"/>
+        </svg>
+        <button class="sbtn">Start Brewing →</button>
+      </div>
+      <div class="pn">
+        <div class="ni on"><span class="nic">☕</span><span class="nil">Review</span></div>
+        <div class="ni"><span class="nic">📖</span><span class="nil">Words</span></div>
+        <div class="ni"><span class="nic">⚙️</span><span class="nil">Settings</span></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
